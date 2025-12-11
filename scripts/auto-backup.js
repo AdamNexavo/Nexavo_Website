@@ -171,18 +171,29 @@ function createGitHubRelease(version, tagName) {
 }
 
 try {
-  logger.info('Backup proces gestart');
+  logger.info('🚀 Backup proces gestart');
+  logger.info('─────────────────────────────────────────');
   
   // Check of er wijzigingen zijn
   const status = execSync('git status --porcelain', { encoding: 'utf-8' });
   
   if (status.trim()) {
     const changedFiles = status.trim().split('\n').length;
-    logger.info(`Wijzigingen gedetecteerd: ${changedFiles} bestand(en)`, { fileCount: changedFiles });
+    const changedFileList = status.trim().split('\n').map(line => {
+      const file = line.substring(3).trim();
+      const status = line.substring(0, 2).trim();
+      return `${status} ${file}`;
+    }).slice(0, 5); // Toon max 5 bestanden
+    
+    logger.info(`📋 Wijzigingen gedetecteerd: ${changedFiles} bestand(en)`);
+    if (changedFileList.length > 0) {
+      logger.debug(`Bestanden: ${changedFileList.join(', ')}${changedFiles > 5 ? '...' : ''}`);
+    }
     
     // Voeg alle wijzigingen toe
-    execSync('git add .', { stdio: 'inherit' });
-    logger.debug('Alle wijzigingen toegevoegd aan staging area');
+    logger.debug('📦 Wijzigingen toevoegen aan staging area...');
+    execSync('git add .', { stdio: 'pipe' });
+    logger.debug('✅ Alle wijzigingen toegevoegd aan staging area');
     
     // Maak een commit met timestamp
     const timestamp = new Date().toLocaleString('nl-NL', { 
@@ -190,54 +201,96 @@ try {
       timeStyle: 'medium' 
     });
     const commitMessage = `Auto backup: ${timestamp}`;
-    execSync(`git commit -m "${commitMessage}"`, { stdio: 'inherit' });
-    logger.debug('Commit gemaakt', { commitMessage });
+    logger.info(`📝 Committen van ${changedFiles} bestand(en)...`);
+    execSync(`git commit -m "${commitMessage}"`, { stdio: 'pipe' });
+    const commitHash = execSync('git rev-parse HEAD', { encoding: 'utf-8' }).trim();
+    logger.success(`✅ Commit gemaakt: ${commitHash.substring(0, 7)} - ${commitMessage}`, { 
+      commitHash: commitHash.substring(0, 7), 
+      commitMessage,
+      fileCount: changedFiles
+    });
     
     // Push naar GitHub
     const branch = getCurrentBranch();
-    logger.debug('Branch gedetecteerd', { branch });
+    logger.debug(`Branch gedetecteerd: ${branch}`, { branch });
     
-    // Haal commit hash op voor tag
-    const commitHash = execSync('git rev-parse HEAD', { encoding: 'utf-8' }).trim();
-    
-    // Gebruik gh CLI als beschikbaar, anders standaard git push
+    // Push naar GitHub
+    logger.info(`🔄 Starten met pushen naar GitHub (branch: ${branch})...`);
     let pushSuccess = false;
+    let pushError = null;
+    
     if (checkGhCLI()) {
       logger.debug('GitHub CLI beschikbaar, gebruik voor authenticatie');
       try {
         // Probeer eerst met gh auth refresh om token te vernieuwen
         execSync('gh auth refresh -h github.com -s write:packages 2>/dev/null || true', { stdio: 'ignore' });
+        logger.debug('Authenticatie met GitHub CLI...');
         const pushOutput = execSync(`git push origin ${branch}`, { encoding: 'utf-8', stdio: 'pipe' });
-        logger.debug('Push output', { output: pushOutput });
-        logger.success(`Backup voltooid en gepusht naar ${branch}`, { timestamp, branch });
+        const pushLines = pushOutput.trim().split('\n').filter(l => l.trim());
+        logger.info(`✅ Push succesvol! Commit hash: ${commitHash.substring(0, 7)}`);
+        if (pushLines.length > 0) {
+          logger.debug(`Push details: ${pushLines.join(' | ')}`);
+        }
+        logger.success(`✨ Backup compleet: Commit gepusht naar GitHub (${branch})`, { 
+          commitHash: commitHash.substring(0, 7), 
+          branch, 
+          timestamp 
+        });
         pushSuccess = true;
       } catch (error) {
-        logger.warn('GitHub CLI push gefaald, probeer normale git push', { error: error.message });
+        pushError = error;
+        logger.warn(`⚠️  GitHub CLI push gefaald: ${error.message}`);
+        logger.info('🔄 Probeer normale git push als fallback...');
         try {
           // Fallback naar normale git push
           const pushOutput = execSync(`git push origin ${branch}`, { encoding: 'utf-8', stdio: 'pipe' });
-          logger.debug('Push output (fallback)', { output: pushOutput });
-          logger.success(`Backup voltooid en gepusht naar ${branch}`, { timestamp, branch });
+          const pushLines = pushOutput.trim().split('\n').filter(l => l.trim());
+          logger.info(`✅ Push succesvol (fallback)! Commit hash: ${commitHash.substring(0, 7)}`);
+          if (pushLines.length > 0) {
+            logger.debug(`Push details: ${pushLines.join(' | ')}`);
+          }
+          logger.success(`✨ Backup compleet: Commit gepusht naar GitHub (${branch})`, { 
+            commitHash: commitHash.substring(0, 7), 
+            branch, 
+            timestamp 
+          });
           pushSuccess = true;
         } catch (fallbackError) {
-          logger.error('Push gefaald', { error: fallbackError.message, stderr: fallbackError.stderr?.toString() });
+          pushError = fallbackError;
+          const errorMsg = fallbackError.stderr?.toString() || fallbackError.message;
+          logger.error(`❌ Push gefaald na alle pogingen: ${errorMsg}`, fallbackError);
         }
       }
     } else {
       logger.debug('GitHub CLI niet beschikbaar, gebruik normale git push');
       try {
-        // Fallback: gebruik normale git push (gebruiker moet credentials hebben)
+        logger.info('Authenticatie met git credentials...');
         const pushOutput = execSync(`git push origin ${branch}`, { encoding: 'utf-8', stdio: 'pipe' });
-        logger.debug('Push output', { output: pushOutput });
-        logger.success(`Backup voltooid en gepusht naar ${branch}`, { timestamp, branch });
+        const pushLines = pushOutput.trim().split('\n').filter(l => l.trim());
+        logger.info(`✅ Push succesvol! Commit hash: ${commitHash.substring(0, 7)}`);
+        if (pushLines.length > 0) {
+          logger.debug(`Push details: ${pushLines.join(' | ')}`);
+        }
+        logger.success(`✨ Backup compleet: Commit gepusht naar GitHub (${branch})`, { 
+          commitHash: commitHash.substring(0, 7), 
+          branch, 
+          timestamp 
+        });
         pushSuccess = true;
       } catch (error) {
-        logger.error('Push gefaald', { error: error.message, stderr: error.stderr?.toString() });
+        pushError = error;
+        const errorMsg = error.stderr?.toString() || error.message;
+        logger.error(`❌ Push gefaald: ${errorMsg}`, error);
       }
     }
     
     if (!pushSuccess) {
-      logger.warn('Push naar GitHub is niet gelukt. Commit is wel lokaal gemaakt.', { branch });
+      logger.warn(`⚠️  Push naar GitHub is niet gelukt. Commit ${commitHash.substring(0, 7)} is wel lokaal gemaakt.`, { 
+        branch, 
+        commitHash: commitHash.substring(0, 7),
+        error: pushError?.message 
+      });
+      logger.info('💡 Tip: Push handmatig met: git push origin main');
     }
     
     // Maak versie tag aan (alleen als CREATE_RELEASE environment variable is gezet, of bij belangrijke wijzigingen)
@@ -258,7 +311,7 @@ try {
       }
     }
   } else {
-    logger.info('Geen wijzigingen om te backuppen');
+    logger.info('ℹ️  Geen wijzigingen om te backuppen - alles is up-to-date');
   }
 } catch (error) {
   logger.error('Fout bij backup', error);

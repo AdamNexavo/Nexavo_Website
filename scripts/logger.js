@@ -42,10 +42,21 @@ function getTimestamp() {
 function formatLogEntry(level, message, data = null) {
   const timestamp = getTimestamp();
   const projectName = getProjectName();
-  let entry = `[${timestamp}] [${level}] [${projectName}] ${message}`;
+  const readableTime = new Date(timestamp).toLocaleString('nl-NL', {
+    dateStyle: 'short',
+    timeStyle: 'medium'
+  });
   
-  if (data) {
-    entry += ` | Data: ${JSON.stringify(data)}`;
+  // Basis log entry
+  let entry = `[${readableTime}] [${level}] ${message}`;
+  
+  // Voeg data toe indien beschikbaar
+  if (data && Object.keys(data).length > 0) {
+    // Formatteer data leesbaar
+    const dataStr = Object.entries(data)
+      .map(([key, value]) => `${key}: ${typeof value === 'object' ? JSON.stringify(value) : value}`)
+      .join(', ');
+    entry += ` | ${dataStr}`;
   }
   
   return entry;
@@ -88,10 +99,14 @@ export const logger = {
     appendFileSync(LOG_FILE, entry + '\n');
   },
   
-  // Debug log (alleen naar bestand, niet naar console)
+  // Debug log (alleen naar bestand, niet naar console, tenzij DEBUG mode)
   debug(message, data = null) {
     const entry = formatLogEntry('DEBUG', message, data);
     appendFileSync(LOG_FILE, entry + '\n');
+    // Optioneel: toon debug logs in console als DEBUG env var is gezet
+    if (process.env.DEBUG === 'true') {
+      console.log(`🔍 [DEBUG] ${message}`);
+    }
   },
   
   // Get log file path
