@@ -89,7 +89,7 @@ export const Benefits = () => {
           
           <h2 className="text-4xl md:text-5xl font-extrabold mb-6">
             Waarom kiezen voor{" "}
-            <span className="text-[#6a50ff]">Nexav</span>?
+            <span className="text-[#6a50ff]">Nexavo</span>?
           </h2>
           <p className="text-lg text-muted-foreground">
             Professioneel en toch persoonlijk. Ontdek waarom ondernemers voor ons kiezen.
@@ -160,3 +160,4 @@ export const Benefits = () => {
     </section>
   );
 };
+// Test auto backup 19:58:23
