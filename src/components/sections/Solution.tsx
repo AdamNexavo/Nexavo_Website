@@ -137,10 +137,16 @@ export const Solution = () => {
               <span className="text-sm font-semibold">Effectief & professioneel</span>
             </div>
             
-            <h2 className="text-4xl md:text-5xl font-extrabold mb-6">
+            <motion.h2 
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="text-4xl md:text-5xl font-extrabold mb-6"
+            >
             Websites die{" "}
             <span className="text-[#6a50ff]">werken</span>
-            </h2>
+            </motion.h2>
             <p className="text-lg text-muted-foreground mb-8">
               Geen standaard templates, maar een website die écht bij jouw bedrijf past. 
               Ontworpen om bezoekers om te zetten in klanten.
@@ -155,7 +161,12 @@ export const Solution = () => {
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: 0.3 + index * 0.1 }}
-                  className="flex items-center gap-4"
+                  whileHover={{ 
+                    y: -8, 
+                    scale: 1.02,
+                    transition: { type: "spring", stiffness: 400, damping: 17 }
+                  }}
+                  className="flex items-center gap-4 bg-white rounded-xl p-4 shadow-soft border border-border/50 hover:shadow-card"
                 >
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
                     dienst.color === "orange" ? "bg-orange-100" : "bg-[#6a50ff]/10"

@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Star } from "lucide-react";
+import { TypingText } from "@/components/TypingText";
 
 const testimonials = [
   {
@@ -46,10 +47,10 @@ export const Testimonials = () => {
             <p className="text-sm uppercase tracking-widest text-muted-foreground mb-4">
               Klanten aan het woord
             </p>
-            <h2 className="text-4xl md:text-5xl font-extrabold mb-6">
+            <TypingText className="text-4xl md:text-5xl font-extrabold mb-6">
               Wat ondernemers{" "}
               <span className="text-[#6a50ff]">zeggen</span>
-            </h2>
+            </TypingText>
             <p className="text-lg text-muted-foreground mb-8">
               Meer dan 50 ondernemers gingen je voor. Dit is wat ze te zeggen hebben.
             </p>

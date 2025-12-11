@@ -1,6 +1,6 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { Solution } from "@/components/sections/Solution";
+import { Automations } from "@/components/sections/Automations";
 import { Contact } from "@/components/sections/Contact";
 
 const Oplossing = () => {
@@ -8,7 +8,7 @@ const Oplossing = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main>
-        <Solution />
+        <Automations />
         <Contact />
       </main>
       <Footer />
@@ -17,6 +17,7 @@ const Oplossing = () => {
 };
 
 export default Oplossing;
+
 
 
 

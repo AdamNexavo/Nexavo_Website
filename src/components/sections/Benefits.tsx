@@ -1,8 +1,9 @@
 import { motion, useInView } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Target, Smartphone, Shield, Users } from "lucide-react";
+import { Target, Smartphone, Shield, Sparkles, Users, Heart, Droplet, Zap } from "lucide-react";
 import { useRef, useEffect, useState } from "react";
+import { TypingText } from "@/components/TypingText";
 
 const features = [
   {
@@ -24,17 +25,18 @@ const features = [
     color: "purple",
   },
   {
-    icon: Users,
-    title: "Persoonlijke service",
-    description: "Direct contact met ons team, geen chatbots of wachttijden.",
+    icon: Sparkles,
+    title: "AI geoptimaliseerd",
+    description: "Geavanceerde AI-technologie voor optimale prestaties en gebruikerservaring.",
     color: "orange",
   },
 ];
 
 const stats = [
-  { value: 65, suffix: "+", label: "Projecten" },
-  { value: 7, suffix: " dagen", label: "Levertijd" },
-  { value: 100, suffix: "%", label: "Tevreden" },
+  { value: 65, suffix: "+", label: "Projecten", icon: Target },
+  { value: 7, suffix: " dagen", label: "Levertijd", icon: Zap },
+  { value: 100, suffix: "%", label: "Tevreden", icon: Heart },
+  { value: 24, suffix: "/7", label: "Support", icon: Users },
 ];
 
 // Animated counter component
@@ -73,7 +75,7 @@ const AnimatedCounter = ({ value, suffix }: { value: number; suffix: string }) =
 
 export const Benefits = () => {
   return (
-    <section className="py-24 bg-white relative">
+    <section className="py-24 bg-[#f5f5f7] relative">
       <div className="container">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -87,10 +89,10 @@ export const Benefits = () => {
             <span className="text-sm font-semibold">Ervaar het verschil</span>
           </div>
           
-          <h2 className="text-4xl md:text-5xl font-extrabold mb-6">
+          <TypingText className="text-4xl md:text-5xl font-extrabold mb-6">
             Waarom kiezen voor{" "}
-            <span className="text-[#6a50ff]">Nexav</span>?
-          </h2>
+            <span className="text-[#6a50ff]">Nexavo</span>?
+          </TypingText>
           <p className="text-lg text-muted-foreground">
             Professioneel en toch persoonlijk. Ontdek waarom ondernemers voor ons kiezen.
           </p>
@@ -105,7 +107,12 @@ export const Benefits = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="bg-white rounded-2xl p-6 shadow-soft border border-border/50 hover:shadow-card transition-all duration-300"
+              whileHover={{ 
+                y: -8, 
+                scale: 1.02,
+                transition: { type: "spring", stiffness: 400, damping: 17 }
+              }}
+              className="bg-white rounded-2xl p-6 shadow-soft border border-border/50 hover:shadow-card"
             >
               <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${
                 feature.color === "orange" ? "bg-orange-100" : "bg-[#6a50ff]/10"
@@ -120,41 +127,68 @@ export const Benefits = () => {
           ))}
         </div>
 
-        {/* Stats with animated counters */}
+        {/* Combined Stats & CTA Section - Split Design */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="flex flex-wrap justify-center gap-12 mb-12"
+          className="max-w-7xl mx-auto"
         >
-          {stats.map((stat) => (
-            <div key={stat.label} className="text-center">
-              <p className="text-5xl font-extrabold mb-2 text-[#6a50ff]">
-                <AnimatedCounter value={stat.value} suffix={stat.suffix} />
-              </p>
-              <p className="text-muted-foreground">{stat.label}</p>
-            </div>
-          ))}
-        </motion.div>
+          <div className="bg-white rounded-3xl p-8 md:p-12 lg:p-16 shadow-soft">
+            <div className="grid md:grid-cols-2 gap-8 md:gap-12 lg:gap-16">
+              {/* Left Side - Content & CTA */}
+              <div className="flex flex-col justify-center">
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5 }}
+                  className="space-y-3"
+                >
+                  <h3 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-foreground leading-tight">
+                    Resultaten waarop je kunt bouwen.
+                  </h3>
+                  <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
+                    We nemen het denkwerk uit handen en bouwen een website die jouw bedrijf vooruithelpt.
+                  </p>
+                  <div className="pt-4">
+                    <Link to="/contact">
+                      <Button>Get in Touch</Button>
+                    </Link>
+                  </div>
+                </motion.div>
+              </div>
 
-        {/* CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center"
-        >
-          <h3 className="text-xl font-bold mb-4">Ervaar het verschil zelf</h3>
-          <p className="text-muted-foreground mb-6">
-            Sluit je aan bij tientallen tevreden ondernemers die al zijn overgestapt
-          </p>
-          <Link to="/contact">
-            <Button size="lg">
-              Neem contact op
-            </Button>
-          </Link>
+              {/* Right Side - Stats Grid */}
+              <div className="grid grid-cols-2 gap-4 md:gap-6">
+                {stats.map((stat, index) => {
+                  return (
+                    <motion.div
+                      key={stat.label}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.4, delay: index * 0.1 }}
+                      className="bg-gray-100 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow duration-300"
+                    >
+                      <div className="flex flex-col items-start gap-4">
+                        <div className="w-12 h-1 bg-orange-500 rounded-full"></div>
+                        <div>
+                          <p className="text-3xl md:text-4xl font-extrabold text-foreground mb-1">
+                            <AnimatedCounter value={stat.value} suffix={stat.suffix} />
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {stat.label}
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </motion.div>
       </div>
     </section>

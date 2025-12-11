@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { TypingText } from "@/components/TypingText";
 import {
   Accordion,
   AccordionContent,
@@ -43,10 +44,10 @@ export const FAQ = () => {
           <p className="text-sm uppercase tracking-widest text-muted-foreground mb-4">
             Vragen
           </p>
-          <h2 className="text-4xl md:text-5xl font-bold">
+          <TypingText className="text-4xl md:text-5xl font-bold">
             Veelgestelde{" "}
             <span className="text-[#6a50ff]">vragen</span>
-          </h2>
+          </TypingText>
         </motion.div>
 
         <motion.div

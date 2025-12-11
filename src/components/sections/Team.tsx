@@ -37,10 +37,16 @@ export const Team = () => {
           <span className="inline-block text-primary font-semibold text-sm uppercase tracking-wider mb-4">
             Team
           </span>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <motion.h2 
+            initial={{ opacity: 0, x: -50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-3xl md:text-4xl font-bold mb-4"
+          >
             Ontmoet het team achter{" "}
             <span className="text-gradient">Nexavo</span>
-          </h2>
+          </motion.h2>
           <p className="text-lg text-muted-foreground">
             Een gepassioneerd team dat jouw online succes mogelijk maakt.
           </p>

@@ -44,3 +44,4 @@ try {
   console.error('❌ Fout bij lezen van logs:', error.message);
   process.exit(1);
 }
+

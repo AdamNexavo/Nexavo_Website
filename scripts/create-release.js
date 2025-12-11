@@ -203,3 +203,4 @@ main().catch(error => {
   logger.error('Fout bij release creation', error);
   process.exit(1);
 });
+

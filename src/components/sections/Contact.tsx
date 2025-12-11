@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { TypingText } from "@/components/TypingText";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -69,10 +70,10 @@ export const Contact = () => {
               >
                 {/* Text content */}
                 <div className="mt-auto pt-28 md:pt-32">
-                  <h2 className="text-4xl md:text-5xl font-extrabold mb-3 leading-tight text-white">
+                  <TypingText className="text-4xl md:text-5xl font-extrabold mb-3 leading-tight text-white">
                     Plan een{" "}
                     <span className="text-orange-500">gratis demo</span>
-                  </h2>
+                  </TypingText>
                   <p className="text-white/90 max-w-md leading-relaxed text-base md:text-lg">
                     Krijg een persoonlijke rondleiding door onze applicatie en ontdek de wereld van plangemak.
                   </p>

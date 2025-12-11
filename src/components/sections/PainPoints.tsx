@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { XCircle, AlertTriangle } from "lucide-react";
+import { TypingText } from "@/components/TypingText";
 
 const existingWebsite = [
   "Verouderd design dat niet meer converteert",
@@ -32,9 +33,9 @@ export const PainPoints = () => {
           transition={{ duration: 0.6 }}
           className="text-center max-w-3xl mx-auto mb-16"
         >
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <TypingText className="text-3xl md:text-4xl font-bold mb-4">
             Herken jij dit?
-          </h2>
+          </TypingText>
           <p className="text-lg text-muted-foreground">
             Of je nu een verouderde website hebt of helemaal geen website — 
             je loopt omzet en kansen mis.

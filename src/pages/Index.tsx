@@ -2,7 +2,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Hero } from "@/components/sections/Hero";
 import { PainPoints } from "@/components/sections/PainPoints";
-import { Solution } from "@/components/sections/Solution";
+import { Automations } from "@/components/sections/Automations";
 import { Features } from "@/components/sections/Features";
 import { Benefits } from "@/components/sections/Benefits";
 import { Pricing } from "@/components/sections/Pricing";
@@ -20,7 +20,7 @@ const Index = () => {
       <main>
         <Hero />
         <PainPoints />
-        <Solution />
+        <Automations />
         <Features />
         <Benefits />
         <Niche />

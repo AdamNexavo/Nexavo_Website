@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { TypingText } from "@/components/TypingText";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Phone, Paintbrush, Rocket } from "lucide-react";
@@ -30,12 +31,6 @@ const steps = [
 export const Process = () => {
   return (
     <section className="py-24 bg-white relative">
-      {/* Curved divider top */}
-      <div className="absolute top-0 left-0 right-0 overflow-hidden">
-        <svg className="w-full h-20" preserveAspectRatio="none" viewBox="0 0 1440 80">
-          <path fill="#f5f5f7" d="M0,0 C480,80 960,80 1440,0 L1440,0 L0,0 Z"></path>
-        </svg>
-      </div>
       <div className="container">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -45,11 +40,11 @@ export const Process = () => {
           className="text-center max-w-2xl mx-auto mb-16"
         >
           <p className="text-sm text-muted-foreground uppercase tracking-wider mb-4">Zo simpel is het</p>
-          <h2 className="text-4xl md:text-5xl font-extrabold mb-6">
+          <TypingText className="text-4xl md:text-5xl font-extrabold mb-6">
             Van idee tot{" "}
-            <span className="text-[#6a50ff]">online</span>{" "}
+            <span className="text-[#6a50ff]">realisatie</span>{" "}
             in 3 stappen
-          </h2>
+          </TypingText>
           <p className="text-lg text-muted-foreground">
             Bij Nexavo nemen we je alle zorgen uit handen. Jij focust op ondernemen.
           </p>

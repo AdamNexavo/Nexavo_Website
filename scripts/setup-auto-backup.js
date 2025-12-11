@@ -88,3 +88,4 @@ console.log('   • Bekijk logs: npm run backup:logs');
 console.log('   • Bekijk laatste logs: npm run backup:logs:tail');
 console.log('   • Backups gebeuren automatisch na elke git commit');
 console.log(`\n📁 Logs worden opgeslagen in: ${join(projectRoot, 'logs', 'backup.log')}`);
+

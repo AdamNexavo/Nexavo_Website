@@ -53,10 +53,16 @@ export const Niche = () => {
           <span className="inline-block text-primary font-semibold text-sm uppercase tracking-wider mb-4">
             Voor wie?
           </span>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <motion.h2 
+            initial={{ opacity: 0, x: -50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-3xl md:text-4xl font-bold mb-4"
+          >
             Perfect voor{" "}
             <span className="text-gradient">dienstverlenende ondernemers</span>
-          </h2>
+          </motion.h2>
           <p className="text-lg text-muted-foreground">
             Nexavo is speciaal ontwikkeld voor ondernemers die veel bookings hebben, 
             reviews willen verzamelen en automatisering nodig hebben.

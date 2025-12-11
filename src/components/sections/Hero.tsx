@@ -17,34 +17,28 @@ const businessTypes = ["B2C", "B2B"];
 // Logo carousel configuration - easily replaceable
 const logoCarouselItems = [
   { 
-    logo: "Y", 
+    logo: "bibi", 
     badgeColor: "bg-white", 
     logoColor: "text-green-600",
-    logoComponent: <span className="text-green-600 font-bold text-xl">Y</span>
+    logoComponent: <img src="/bibi-logo.png" alt="bibi logo" className="w-full h-full object-contain rounded-full scale-125 border-[3px] border-black" style={{ borderWidth: '3px', borderColor: 'rgba(0, 0, 0, 1)', borderStyle: 'solid' }} />
   },
   { 
     logo: "up", 
     badgeColor: "bg-black", 
     logoColor: "text-white",
-    logoComponent: <span className="text-white font-semibold text-sm">up</span>
+    logoComponent: <img src="/up-logo.png" alt="up logo" className="w-full h-full object-contain rounded-full" />
   },
   { 
-    logo: "R", 
+    logo: "VETA", 
     badgeColor: "bg-white", 
-    logoColor: "text-[#6a50ff]",
-    logoComponent: <span className="text-[#6a50ff] font-bold text-xl">R</span>
+    logoColor: "text-white",
+    logoComponent: <img src="/veta-logo.png" alt="VETA logo" className="w-full h-full object-contain rounded-full scale-110 border-[3px] border-black" style={{ backgroundColor: 'rgba(255, 255, 255, 1)', borderWidth: '3px', borderColor: 'rgba(0, 0, 0, 1)', borderStyle: 'solid' }} />
   },
   { 
-    logo: "WELDER", 
+    logo: "VETA Network", 
     badgeColor: "bg-white", 
-    logoColor: "text-green-600", 
-    subtext: "THE MARKETING AGENCY",
-    logoComponent: (
-      <div className="text-center text-green-600 px-1.5">
-        <div className="text-[10px] font-bold leading-tight">WELDER</div>
-        <div className="text-[7px] font-light leading-tight mt-0.5">THE MARKETING AGENCY</div>
-      </div>
-    )
+    logoColor: "text-black",
+    logoComponent: <img src="/veta-network-logo.png" alt="VETA Network logo" className="w-full h-full object-contain rounded-full" />
   }
 ];
 
@@ -275,9 +269,31 @@ export const Hero = () => {
         }}
       />
       
-      {/* Film grain texture overlay - finer and more intense */}
+      {/* Grain overlay - prominent texture over background */}
       <div 
-        className="absolute opacity-70 pointer-events-none"
+        className="absolute pointer-events-none z-[1]"
+        style={{
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100%',
+          height: '100%',
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.4'/%3E%3C/svg%3E")`,
+          backgroundSize: '200px 200px',
+          backgroundRepeat: 'repeat',
+          backgroundPosition: '0 0',
+          opacity: 0.5,
+          mixBlendMode: 'overlay',
+          margin: 0,
+          padding: 0,
+          transform: 'none'
+        }}
+      />
+      
+      {/* Additional fine grain layer for more texture */}
+      <div 
+        className="absolute pointer-events-none z-[1]"
         style={{
           top: 0,
           left: 0,
@@ -289,24 +305,24 @@ export const Hero = () => {
             repeating-linear-gradient(
               0deg,
               transparent,
-              transparent 0.5px,
-              rgba(255, 255, 255, 0.18) 0.5px,
-              rgba(255, 255, 255, 0.18) 1px
+              transparent 2px,
+              rgba(255, 255, 255, 0.03) 2px,
+              rgba(255, 255, 255, 0.03) 4px
             ),
             repeating-linear-gradient(
               90deg,
               transparent,
-              transparent 0.5px,
-              rgba(255, 255, 255, 0.15) 0.5px,
-              rgba(255, 255, 255, 0.15) 1px
-            ),
-            radial-gradient(circle at 0.3px 0.3px, rgba(255,255,255,0.5) 0.3px, transparent 0)
+              transparent 2px,
+              rgba(255, 255, 255, 0.03) 2px,
+              rgba(255, 255, 255, 0.03) 4px
+            )
           `,
-          backgroundSize: '100% 100%, 100% 100%, 0.5px 0.5px',
-          backgroundRepeat: 'repeat, repeat, repeat',
-          backgroundPosition: '0 0, 0 0, 0 0',
-          imageRendering: 'crisp-edges',
+          backgroundSize: '100% 100%, 100% 100%',
+          backgroundRepeat: 'repeat',
+          backgroundPosition: '0 0',
+          opacity: 0.6,
           mixBlendMode: 'overlay',
+          imageRendering: 'crisp-edges',
           margin: 0,
           padding: 0,
           transform: 'none'
@@ -403,76 +419,6 @@ export const Hero = () => {
         }}
       />
       
-      {/* Extra fine grain layer for more texture */}
-      <div 
-        className="absolute opacity-45 pointer-events-none"
-        style={{
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          width: '100%',
-          height: '100%',
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.5' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-          backgroundSize: '100px 100px',
-          backgroundRepeat: 'repeat',
-          backgroundPosition: '0 0',
-          mixBlendMode: 'overlay',
-          margin: 0,
-          padding: 0,
-          transform: 'none'
-        }}
-      />
-      
-      {/* Additional fine grain dots */}
-      <div 
-        className="absolute opacity-40 pointer-events-none"
-        style={{
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          width: '100%',
-          height: '100%',
-          backgroundImage: `radial-gradient(circle at 0.2px 0.2px, rgba(255,255,255,0.6) 0.2px, transparent 0)`,
-          backgroundSize: '0.8px 0.8px',
-          backgroundRepeat: 'repeat',
-          backgroundPosition: '0 0',
-          imageRendering: 'crisp-edges',
-          margin: 0,
-          padding: 0,
-          transform: 'none'
-        }}
-      />
-      
-      {/* Extra grain layer for more coverage */}
-      <div 
-        className="absolute opacity-35 pointer-events-none"
-        style={{
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          width: '100%',
-          height: '100%',
-          backgroundImage: `
-            repeating-linear-gradient(
-              45deg,
-              transparent,
-              transparent 0.3px,
-              rgba(255, 255, 255, 0.1) 0.3px,
-              rgba(255, 255, 255, 0.1) 0.6px
-            )
-          `,
-          backgroundSize: '1px 1px',
-          backgroundRepeat: 'repeat',
-          backgroundPosition: '0 0',
-          imageRendering: 'crisp-edges',
-          margin: 0,
-          padding: 0,
-          transform: 'none'
-        }}
-      />
 
       <div className="relative h-full z-10 w-full px-4 sm:px-6 lg:px-8 xl:px-12 flex flex-col justify-center">
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
@@ -551,7 +497,7 @@ export const Hero = () => {
                   size="lg" 
                   className="bg-[#6a50ff] hover:bg-[#5840e0] text-white rounded-lg px-8 py-6 text-lg font-semibold"
                 >
-                  Plan een afspraak
+                  Plan een demo
                 </Button>
               </Link>
               <Link to="/projecten">
@@ -883,26 +829,34 @@ export const Hero = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.8 }}
-          className="relative z-10 flex flex-col items-center justify-center gap-6 mt-8"
+          className="relative z-10 flex flex-col items-center justify-center gap-6 mt-24"
         >
           {/* Logo Carousel with overlapping circular badges */}
           <div className="flex items-center relative" style={{ width: 'fit-content' }}>
             {/* Logo badges with overlap - exact styling from screenshot */}
-            {logoCarouselItems.map((item, index) => (
-              <div
-                key={index}
-                className={`${item.badgeColor} border-4 border-black rounded-full flex items-center justify-center relative`}
-                style={{
-                  width: '56px',
-                  height: '56px',
-                  marginLeft: index > 0 ? '-14px' : '0',
-                  zIndex: 10 - index,
-                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-                }}
-              >
-                {item.logoComponent}
-              </div>
-            ))}
+            {logoCarouselItems.map((item, index) => {
+              // Use VETA logo for the second round (index 1) with full width content
+              const isSecondRound = index === 1;
+              const logoToShow = isSecondRound 
+                ? <img src="/veta-logo.png" alt="VETA logo" className="w-full h-full object-contain rounded-full" />
+                : item.logoComponent;
+              
+              return (
+                <div
+                  key={index}
+                  className={`${item.badgeColor} border-4 border-black rounded-full flex items-center justify-center relative`}
+                  style={{
+                    width: '56px',
+                    height: '56px',
+                    marginLeft: index > 0 ? '-14px' : '0',
+                    zIndex: 10 - index,
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+                  }}
+                >
+                  {logoToShow}
+                </div>
+              );
+            })}
           </div>
 
           {/* Rating Section - exact styling */}

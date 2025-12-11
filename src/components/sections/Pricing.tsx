@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { TypingText } from "@/components/TypingText";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -57,10 +58,10 @@ export const Pricing = () => {
           <p className="text-sm uppercase tracking-widest text-muted-foreground mb-4">
             Pakketten
           </p>
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">
+          <TypingText className="text-4xl md:text-5xl font-bold mb-6">
             Kies het pakket dat bij{" "}
             <span className="text-[#6a50ff]">jou past</span>
-          </h2>
+          </TypingText>
           <p className="text-lg text-muted-foreground">
             Transparante pakketten zonder verborgen kosten.
           </p>

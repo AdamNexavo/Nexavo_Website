@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
+import { TypingText } from "@/components/TypingText";
 
 const features = [
   "Op maat gemaakt webdesign",
@@ -44,10 +45,10 @@ export const Features = () => {
             <p className="text-sm uppercase tracking-widest text-muted-foreground mb-4">
               Wat je krijgt
             </p>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+            <TypingText className="text-4xl md:text-5xl font-bold mb-6">
               Alles wat je nodig hebt voor{" "}
               <span className="text-[#6a50ff]">online succes</span>
-            </h2>
+            </TypingText>
             <p className="text-lg text-muted-foreground mb-8">
               Bij elk project leveren we een compleet pakket. Geen losse kosten, 
               geen verrassingen — gewoon alles wat je nodig hebt om online te groeien.
