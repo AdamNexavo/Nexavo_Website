@@ -16,7 +16,7 @@ const projectRoot = join(__dirname, '..');
 process.chdir(projectRoot);
 
 let backupTimeout;
-const BACKUP_DELAY = 10000; // Wacht 10 seconden na laatste wijziging voordat backup wordt gedaan
+const BACKUP_DELAY = 20000; // Wacht 20 seconden na laatste wijziging voordat backup wordt gedaan
 const IGNORE_PATTERNS = [
   'node_modules',
   '.git',
