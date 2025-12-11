@@ -201,24 +201,43 @@ try {
     const commitHash = execSync('git rev-parse HEAD', { encoding: 'utf-8' }).trim();
     
     // Gebruik gh CLI als beschikbaar, anders standaard git push
+    let pushSuccess = false;
     if (checkGhCLI()) {
       logger.debug('GitHub CLI beschikbaar, gebruik voor authenticatie');
       try {
         // Probeer eerst met gh auth refresh om token te vernieuwen
         execSync('gh auth refresh -h github.com -s write:packages 2>/dev/null || true', { stdio: 'ignore' });
-        execSync(`git push origin ${branch}`, { stdio: 'inherit' });
+        const pushOutput = execSync(`git push origin ${branch}`, { encoding: 'utf-8', stdio: 'pipe' });
+        logger.debug('Push output', { output: pushOutput });
         logger.success(`Backup voltooid en gepusht naar ${branch}`, { timestamp, branch });
+        pushSuccess = true;
       } catch (error) {
-        logger.warn('GitHub CLI authenticatie gefaald, probeer normale git push');
-        // Fallback naar normale git push
-        execSync(`git push origin ${branch}`, { stdio: 'inherit' });
-        logger.success(`Backup voltooid en gepusht naar ${branch}`, { timestamp, branch });
+        logger.warn('GitHub CLI push gefaald, probeer normale git push', { error: error.message });
+        try {
+          // Fallback naar normale git push
+          const pushOutput = execSync(`git push origin ${branch}`, { encoding: 'utf-8', stdio: 'pipe' });
+          logger.debug('Push output (fallback)', { output: pushOutput });
+          logger.success(`Backup voltooid en gepusht naar ${branch}`, { timestamp, branch });
+          pushSuccess = true;
+        } catch (fallbackError) {
+          logger.error('Push gefaald', { error: fallbackError.message, stderr: fallbackError.stderr?.toString() });
+        }
       }
     } else {
       logger.debug('GitHub CLI niet beschikbaar, gebruik normale git push');
-      // Fallback: gebruik normale git push (gebruiker moet credentials hebben)
-      execSync(`git push origin ${branch}`, { stdio: 'inherit' });
-      logger.success(`Backup voltooid en gepusht naar ${branch}`, { timestamp, branch });
+      try {
+        // Fallback: gebruik normale git push (gebruiker moet credentials hebben)
+        const pushOutput = execSync(`git push origin ${branch}`, { encoding: 'utf-8', stdio: 'pipe' });
+        logger.debug('Push output', { output: pushOutput });
+        logger.success(`Backup voltooid en gepusht naar ${branch}`, { timestamp, branch });
+        pushSuccess = true;
+      } catch (error) {
+        logger.error('Push gefaald', { error: error.message, stderr: error.stderr?.toString() });
+      }
+    }
+    
+    if (!pushSuccess) {
+      logger.warn('Push naar GitHub is niet gelukt. Commit is wel lokaal gemaakt.', { branch });
     }
     
     // Maak versie tag aan (alleen als CREATE_RELEASE environment variable is gezet, of bij belangrijke wijzigingen)
