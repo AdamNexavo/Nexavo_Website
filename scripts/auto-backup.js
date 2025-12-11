@@ -7,7 +7,7 @@
 import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 import logger from './logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -127,6 +127,193 @@ function createTag(version, commitHash) {
   } catch (error) {
     logger.warn(`Kon tag niet aanmaken: ${error.message}`);
     return null;
+  }
+}
+
+// Functie om GIT_LOG.md bij te werken
+function updateGitLog(commitHash, commitMessage, author, email, date) {
+  try {
+    const gitLogPath = join(projectRoot, 'GIT_LOG.md');
+    
+    // Haal commit informatie op als niet meegegeven
+    let hash = commitHash;
+    let message = commitMessage;
+    let commitAuthor = author;
+    let commitEmail = email;
+    let commitDate = date;
+    
+    if (!hash || !message || !commitAuthor || !commitEmail || !commitDate) {
+      try {
+        hash = execSync('git rev-parse HEAD', { encoding: 'utf-8' }).trim();
+        const logEntry = execSync(`git log -1 --pretty=format:"%H|%an|%ae|%ad|%s" --date=iso ${hash}`, { 
+          encoding: 'utf-8' 
+        }).trim();
+        const [fullHash, name, mail, dateStr, msg] = logEntry.split('|');
+        hash = fullHash;
+        message = message || msg;
+        commitAuthor = commitAuthor || name;
+        commitEmail = commitEmail || mail;
+        commitDate = commitDate || dateStr;
+      } catch (error) {
+        logger.warn('Kon commit info niet ophalen voor GIT_LOG.md', { error: error.message });
+        return;
+      }
+    }
+    
+    // Lees huidige GIT_LOG.md of maak nieuwe
+    let content = '';
+    if (existsSync(gitLogPath)) {
+      content = readFileSync(gitLogPath, 'utf-8');
+    } else {
+      content = `# Git Commit Log
+
+Dit bestand bevat de volledige git commit geschiedenis van dit project.
+
+Laatste update: ${new Date().toLocaleString('nl-NL')}
+
+## Commit Overzicht (Grafisch)
+
+\`\`\`
+`;
+
+      // Voeg git log graph toe
+      try {
+        const graph = execSync('git log --oneline --graph --all --decorate -20', { encoding: 'utf-8' }).trim();
+        content += graph + '\n```\n\n';
+      } catch {
+        content += '* Geen commits gevonden\n```\n\n';
+      }
+
+      content += `## Gedetailleerde Commit Geschiedenis
+
+| Hash | Auteur | Email | Datum | Bericht |
+|------|--------|-------|-------|---------|
+`;
+
+      // Voeg git log toe
+      try {
+        const logEntries = execSync('git log --pretty=format:"%H|%an|%ae|%ad|%s" --date=iso -20', { encoding: 'utf-8' })
+          .trim()
+          .split('\n')
+          .filter(l => l.trim());
+        
+        logEntries.forEach(line => {
+          const [hash, name, mail, dateStr, msg] = line.split('|');
+          content += `| ${hash.substring(0, 7)} | ${name} | ${mail} | ${dateStr} | ${msg} |\n`;
+        });
+      } catch {
+        // Geen entries
+      }
+
+      content += `\n## Volledige Log (CSV formaat)
+
+\`\`\`
+Hash|Auteur|Email|Datum|Bericht
+`;
+
+      // Voeg CSV entries toe
+      try {
+        const csvEntries = execSync('git log --pretty=format:"%H|%an|%ae|%ad|%s" --date=iso -20', { encoding: 'utf-8' })
+          .trim()
+          .split('\n')
+          .filter(l => l.trim());
+        
+        csvEntries.forEach(line => {
+          content += line + '\n';
+        });
+      } catch {
+        // Geen entries
+      }
+
+      content += `\`\`\`
+
+---
+
+## Backup Logs
+
+`;
+    }
+
+    // Voeg nieuwe backup log entry toe aan het einde
+    const logEntry = `### ${new Date().toLocaleString('nl-NL')} - ${commitMessage}
+
+- **Commit Hash**: ${hash.substring(0, 7)}
+- **Auteur**: ${commitAuthor} (${commitEmail})
+- **Datum**: ${commitDate}
+- **Status**: ✅ Gepusht naar GitHub
+
+---
+
+`;
+
+    // Voeg entry toe aan het einde, vóór de laatste regel
+    if (content.includes('## Backup Logs')) {
+      // Voeg toe na "## Backup Logs"
+      const backupLogsIndex = content.indexOf('## Backup Logs') + '## Backup Logs'.length;
+      const beforeBackup = content.substring(0, backupLogsIndex);
+      const afterBackup = content.substring(backupLogsIndex);
+      content = beforeBackup + '\n\n' + logEntry + afterBackup;
+    } else {
+      // Voeg nieuwe sectie toe
+      content += logEntry;
+    }
+
+    // Update laatste update timestamp bovenaan
+    const updatePattern = /Laatste update: .*/;
+    if (updatePattern.test(content)) {
+      content = content.replace(updatePattern, `Laatste update: ${new Date().toLocaleString('nl-NL')}`);
+    }
+
+    // Update de grafische weergave
+    try {
+      const graph = execSync('git log --oneline --graph --all --decorate -20', { encoding: 'utf-8' }).trim();
+      const graphPattern = /```[\s\S]*?```/;
+      const graphMatch = content.match(/## Commit Overzicht \(Grafisch\)\s+```/);
+      if (graphMatch) {
+        const start = content.indexOf('## Commit Overzicht (Grafisch)');
+        const end = content.indexOf('```', start) + 3;
+        const newGraph = `## Commit Overzicht (Grafisch)
+
+\`\`\`
+${graph}
+\`\`\`
+`;
+        content = content.substring(0, start) + newGraph + content.substring(content.indexOf('\n', end));
+      }
+    } catch (error) {
+      logger.debug('Kon git graph niet updaten in GIT_LOG.md', { error: error.message });
+    }
+
+    // Update de tabel
+    try {
+      const logEntries = execSync('git log --pretty=format:"%H|%an|%ae|%ad|%s" --date=iso -20', { encoding: 'utf-8' })
+        .trim()
+        .split('\n')
+        .filter(l => l.trim());
+      
+      const tableStart = content.indexOf('| Hash | Auteur |');
+      const tableEnd = content.indexOf('\n\n', tableStart);
+      if (tableStart !== -1 && tableEnd !== -1) {
+        const beforeTable = content.substring(0, tableStart);
+        const afterTable = content.substring(tableEnd);
+        let newTable = `| Hash | Auteur | Email | Datum | Bericht |\n|------|--------|-------|-------|---------|\n`;
+        
+        logEntries.forEach(line => {
+          const [hash, name, mail, dateStr, msg] = line.split('|');
+          newTable += `| ${hash.substring(0, 7)} | ${name} | ${mail} | ${dateStr} | ${msg} |\n`;
+        });
+        
+        content = beforeTable + newTable + afterTable;
+      }
+    } catch (error) {
+      logger.debug('Kon tabel niet updaten in GIT_LOG.md', { error: error.message });
+    }
+
+    // Schrijf bijgewerkt bestand
+    writeFileSync(gitLogPath, content, 'utf-8');
+    logger.debug('GIT_LOG.md bijgewerkt met nieuwe backup entry', { commitHash: hash.substring(0, 7) });
+  } catch (error) {
+    logger.warn('Kon GIT_LOG.md niet bijwerken', { error: error.message });
   }
 }
 
@@ -255,6 +442,16 @@ try {
             timestamp 
           });
           pushSuccess = true;
+          
+          // Update GIT_LOG.md
+          try {
+            const commitInfo = execSync(`git log -1 --pretty=format:"%an|%ae|%ad" --date=iso ${commitHash}`, { 
+              encoding: 'utf-8' 
+            }).trim().split('|');
+            updateGitLog(commitHash, commitMessage, commitInfo[0], commitInfo[1], commitInfo[2]);
+          } catch (error) {
+            logger.debug('Kon commit info niet ophalen voor GIT_LOG.md update', { error: error.message });
+          }
         } catch (fallbackError) {
           pushError = fallbackError;
           const errorMsg = fallbackError.stderr?.toString() || fallbackError.message;
@@ -277,6 +474,16 @@ try {
           timestamp 
         });
         pushSuccess = true;
+        
+        // Update GIT_LOG.md
+        try {
+          const commitInfo = execSync(`git log -1 --pretty=format:"%an|%ae|%ad" --date=iso ${commitHash}`, { 
+            encoding: 'utf-8' 
+          }).trim().split('|');
+          updateGitLog(commitHash, commitMessage, commitInfo[0], commitInfo[1], commitInfo[2]);
+        } catch (error) {
+          logger.debug('Kon commit info niet ophalen voor GIT_LOG.md update', { error: error.message });
+        }
       } catch (error) {
         pushError = error;
         const errorMsg = error.stderr?.toString() || error.message;
