@@ -164,3 +164,4 @@ export const Benefits = () => {
 // Nog een test 19:59:33
 // Test met verbeterde push 20:00:51
 // Finale test 20:01:42
+// Test verbeterde logs 20:04:33
