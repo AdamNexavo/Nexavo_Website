@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
-import { Users, Briefcase, Scissors, Dumbbell, Heart, Building } from "lucide-react";
+import { NexDualLineTitle } from "@/components/ui/nex-typography";
+import { SectionLines } from "@/components/backgrounds/section-lines";
 
 const niches = [
   { 
@@ -41,8 +41,9 @@ const niches = [
 
 export const Niche = () => {
   return (
-    <section className="py-20">
-      <div className="container">
+    <section className="relative overflow-hidden py-20">
+      <SectionLines opacity="subtle" />
+      <div className="container relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -53,16 +54,13 @@ export const Niche = () => {
           <span className="inline-block text-primary font-semibold text-sm uppercase tracking-wider mb-4">
             Voor wie?
           </span>
-          <motion.h2 
-            initial={{ opacity: 0, x: -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-3xl md:text-4xl font-bold mb-4"
-          >
-            Perfect voor{" "}
-            <span className="text-gradient">dienstverlenende ondernemers</span>
-          </motion.h2>
+          <NexDualLineTitle
+            sans="Perfect voor"
+            serif={
+              <span className="text-primary">dienstverlenende ondernemers</span>
+            }
+            className="mb-4"
+          />
           <p className="text-lg text-muted-foreground">
             Nexavo is speciaal ontwikkeld voor ondernemers die veel bookings hebben, 
             reviews willen verzamelen en automatisering nodig hebben.
@@ -82,7 +80,7 @@ export const Niche = () => {
               <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center mb-4">
                 <niche.icon className="w-6 h-6 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">{niche.label}</h3>
+              <h3 className="text-lg font-bold mb-2">{niche.label}</h3>
               <div className="space-y-2 text-sm">
                 <div>
                   <p className="text-muted-foreground font-medium mb-1">Uitdaging:</p>

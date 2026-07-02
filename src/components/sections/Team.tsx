@@ -1,5 +1,4 @@
-import { motion } from "framer-motion";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { NexDualLineTitle } from "@/components/ui/nex-typography";
 import { Linkedin, Mail } from "lucide-react";
 
 const teamMembers = [
@@ -37,16 +36,11 @@ export const Team = () => {
           <span className="inline-block text-primary font-semibold text-sm uppercase tracking-wider mb-4">
             Team
           </span>
-          <motion.h2 
-            initial={{ opacity: 0, x: -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-3xl md:text-4xl font-bold mb-4"
-          >
-            Ontmoet het team achter{" "}
-            <span className="text-gradient">Nexavo</span>
-          </motion.h2>
+          <NexDualLineTitle
+            sans="Ontmoet het team achter"
+            serif={<span className="text-primary">Nexavo</span>}
+            className="mb-4"
+          />
           <p className="text-lg text-muted-foreground">
             Een gepassioneerd team dat jouw online succes mogelijk maakt.
           </p>
@@ -68,7 +62,7 @@ export const Team = () => {
                   {member.name.split(' ').map(n => n[0]).join('')}
                 </AvatarFallback>
               </Avatar>
-              <h3 className="text-xl font-semibold mb-1">{member.name}</h3>
+              <h3 className="text-xl font-bold mb-1">{member.name}</h3>
               <p className="text-primary font-medium mb-3">{member.role}</p>
               <p className="text-sm text-muted-foreground mb-4">{member.bio}</p>
               <div className="flex items-center justify-center gap-3">

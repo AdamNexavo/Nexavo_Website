@@ -1,7 +1,7 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Features } from "@/components/sections/Features";
-import { Contact } from "@/components/sections/Contact";
+import { BottomCTA } from "@/components/sections/BottomCTA";
 
 const Functionaliteiten = () => {
   return (
@@ -9,7 +9,7 @@ const Functionaliteiten = () => {
       <Header />
       <main>
         <Features />
-        <Contact />
+        <BottomCTA />
       </main>
       <Footer />
     </div>

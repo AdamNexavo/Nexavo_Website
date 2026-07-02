@@ -1,7 +1,7 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Testimonials } from "@/components/sections/Testimonials";
-import { Contact } from "@/components/sections/Contact";
+import { BottomCTA } from "@/components/sections/BottomCTA";
 
 const TestimonialsPage = () => {
   return (
@@ -9,7 +9,7 @@ const TestimonialsPage = () => {
       <Header />
       <main>
         <Testimonials />
-        <Contact />
+        <BottomCTA />
       </main>
       <Footer />
     </div>

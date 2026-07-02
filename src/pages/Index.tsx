@@ -11,7 +11,7 @@ import { Niche } from "@/components/sections/Niche";
 import { Testimonials } from "@/components/sections/Testimonials";
 import { Team } from "@/components/sections/Team";
 import { FAQ } from "@/components/sections/FAQ";
-import { Contact } from "@/components/sections/Contact";
+import { BottomCTA } from "@/components/sections/BottomCTA";
 
 const Index = () => {
   return (
@@ -29,7 +29,7 @@ const Index = () => {
         <Testimonials />
         <Team />
         <FAQ />
-        <Contact />
+        <BottomCTA />
       </main>
       <Footer />
     </div>

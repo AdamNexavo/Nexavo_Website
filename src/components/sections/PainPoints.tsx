@@ -1,12 +1,13 @@
 import { motion } from "framer-motion";
 import { XCircle, AlertTriangle } from "lucide-react";
-import { TypingText } from "@/components/TypingText";
+import { NexDualLineTitle } from "@/components/ui/nex-typography";
+import { SectionLines } from "@/components/backgrounds/section-lines";
 
 const existingWebsite = [
   "Verouderd design dat niet meer converteert",
   "Trage laadtijden en slechte performance",
   "Slechte SEO en lage vindbaarheid",
-  "Geen automatiseringen of integraties",
+  "Geen automatiseringen of koppelingen",
   "Afhankelijk van dure developers",
   "Trage support bij problemen",
   "Constante technische issues",
@@ -24,8 +25,9 @@ const noWebsite = [
 
 export const PainPoints = () => {
   return (
-    <section className="py-20 bg-secondary/50">
-      <div className="container">
+    <section className="relative overflow-hidden py-20 bg-secondary/50">
+      <SectionLines opacity="subtle" />
+      <div className="container relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -33,11 +35,9 @@ export const PainPoints = () => {
           transition={{ duration: 0.6 }}
           className="text-center max-w-3xl mx-auto mb-16"
         >
-          <TypingText className="text-3xl md:text-4xl font-bold mb-4">
-            Herken jij dit?
-          </TypingText>
+          <NexDualLineTitle sans="Herken jij" serif="dit?" className="mb-4" />
           <p className="text-lg text-muted-foreground">
-            Of je nu een verouderde website hebt of helemaal geen website — 
+            Of je nu een verouderde website hebt of helemaal geen website:
             je loopt omzet en kansen mis.
           </p>
         </motion.div>
@@ -55,7 +55,7 @@ export const PainPoints = () => {
               <div className="w-12 h-12 rounded-xl bg-destructive/10 flex items-center justify-center">
                 <XCircle className="w-6 h-6 text-destructive" />
               </div>
-              <h3 className="text-xl font-semibold">Bestaande website?</h3>
+              <h3 className="text-xl font-bold">Bestaande website?</h3>
             </div>
             <ul className="space-y-4">
               {existingWebsite.map((item, index) => (
@@ -79,7 +79,7 @@ export const PainPoints = () => {
               <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center">
                 <AlertTriangle className="w-6 h-6 text-amber-500" />
               </div>
-              <h3 className="text-xl font-semibold">Geen website?</h3>
+              <h3 className="text-xl font-bold">Geen website?</h3>
             </div>
             <ul className="space-y-4">
               {noWebsite.map((item, index) => (

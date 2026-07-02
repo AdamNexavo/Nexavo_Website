@@ -1,54 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400..700;1,400..700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
 @layer base {
   :root {
+    /* ——— Fonts ——— */
+    --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
+
+    /* ——— Type scale ——— */
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-base: 1rem;
+    --text-lg: 1.125rem;
+    --text-xl: 1.25rem;
+    --text-2xl: 1.5rem;
+    --text-3xl: 1.875rem;
+    --text-4xl: 2.25rem;
+    --text-5xl: 3rem;
+
+    --leading-body: 1.65;
+    --leading-snug: 1.35;
+    --leading-heading: 1.1;
+    --leading-display: 1.06;
+
+    --tracking-tight: -0.03em;
+    --tracking-display: -0.035em;
+    --tracking-label: 0.06em;
+
+    /* ——— Brand & semantic colors (Attio / Framer inspired) ——— */
     --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    --foreground: 240 6% 4%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 240 6% 4%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 240 6% 4%;
 
     --primary: 255 80% 60%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 6% 4%;
 
-    --muted: 220 14% 96%;
+    --muted: 240 5% 97%;
     --muted-foreground: 220 9% 46%;
 
-    --accent: 220 14% 96%;
+    --accent: 240 5% 96%;
     --accent-foreground: 255 80% 50%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
     --ring: 255 80% 60%;
 
+    /* ——— Radius (10 / 16 / 24 / 32 px) ——— */
     --radius: 1rem;
+    --radius-sm: 0.625rem;
+    --radius-md: 1rem;
+    --radius-lg: 1.5rem;
+    --radius-xl: 2rem;
 
-    /* Secondary brand color - Orange */
+    /* ——— Brand raw values ——— */
+    --brand-purple: 106 80 255;
     --brand-orange: 24 95% 53%;
     --brand-orange-light: 24 95% 95%;
 
-    /* Custom tokens */
-    --gradient-primary: linear-gradient(135deg, #6a50ff 0%, #8b5cf6 100%);
-    --gradient-orange: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
-    --gradient-soft: linear-gradient(180deg, hsl(220 14% 97%) 0%, hsl(0 0% 100%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(220 14% 98%) 0%, hsl(0 0% 100%) 100%);
-    
-    --shadow-soft: 0 2px 8px -2px hsl(222 47% 11% / 0.06);
-    --shadow-card: 0 4px 20px -4px hsl(222 47% 11% / 0.08);
-    --shadow-hover: 0 12px 40px -8px hsl(222 47% 11% / 0.12);
+    /* ——— Pattern & line tokens ——— */
+    --line-hairline: hsl(220 13% 91% / 0.95);
+    --line-frame: hsl(220 13% 88% / 0.6);
+    --dot-color: hsl(220 10% 72% / 0.45);
+    --grid-line: hsl(220 13% 86% / 0.32);
+
+    --surface-muted: 247 247 248;
+    --surface-subtle: 250 250 250;
+    --surface-off-white: 245 245 247;
+
+    /* ——— Shadows — minimal, border-first ——— */
+    --shadow-soft: 0 1px 2px 0 hsl(240 6% 4% / 0.03);
+    --shadow-card: 0 0 0 1px hsl(220 13% 91% / 1);
+    --shadow-hover: 0 0 0 1px hsl(220 13% 86% / 1), 0 8px 24px -12px hsl(240 6% 4% / 0.08);
+    --shadow-featured: 0 0 0 1px hsl(240 6% 4% / 0.1), 0 12px 32px -16px hsl(240 6% 4% / 0.1);
+    --shadow-pricing-highlight:
+      0 0 0 1px hsl(255 80% 60% / 0.28),
+      0 0 0 1px hsl(240 6% 4% / 0.06),
+      0 24px 48px -24px hsl(255 80% 60% / 0.22),
+      0 16px 32px -20px hsl(240 6% 4% / 0.14);
+
+    /* ——— Spacing ——— */
+    --section-py-sm: 4.5rem;
+    --section-py: 5.5rem;
+    --section-py-lg: 7.5rem;
+
+    /* ——— Button heights ——— */
+    --btn-h-sm: 2.25rem;
+    --btn-h: 2.75rem;
+    --btn-h-lg: 3rem;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -59,36 +111,6 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
-
-  .dark {
-    --background: 230 25% 8%;
-    --foreground: 0 0% 98%;
-
-    --card: 230 25% 12%;
-    --card-foreground: 0 0% 98%;
-
-    --popover: 230 25% 12%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 249 100% 70%;
-    --primary-foreground: 230 25% 8%;
-
-    --secondary: 230 20% 15%;
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 230 15% 18%;
-    --muted-foreground: 230 10% 60%;
-
-    --accent: 249 50% 20%;
-    --accent-foreground: 249 100% 80%;
-
-    --destructive: 0 62.8% 50%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 230 15% 20%;
-    --input: 230 15% 20%;
-    --ring: 249 100% 70%;
-  }
 }
 
 @layer base {
@@ -98,29 +120,457 @@
 
   html {
     scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    font-size: var(--text-base);
+    line-height: var(--leading-body);
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold tracking-tight text-foreground;
+  h1, h2 {
+    @apply font-sans font-bold text-foreground;
+    line-height: var(--leading-heading);
+    letter-spacing: var(--tracking-tight);
+  }
+
+  h3, h4, h5, h6 {
+    @apply font-sans font-semibold text-foreground;
+    line-height: var(--leading-snug);
+  }
+
+  p {
+    @apply font-sans leading-relaxed;
+  }
+
+  button, input, textarea, select {
+    @apply font-sans;
+  }
+}
+
+@layer components {
+  /* ——— Layout ——— */
+
+  .nex-container {
+    @apply container max-w-6xl mx-auto px-5 sm:px-6 lg:px-8;
+  }
+
+  .nex-section {
+    padding-top: var(--section-py);
+    padding-bottom: var(--section-py);
+  }
+
+  @media (min-width: 768px) {
+    .nex-section {
+      padding-top: var(--section-py-lg);
+      padding-bottom: var(--section-py-lg);
+    }
+  }
+
+  .nex-section-sm {
+    padding-top: var(--section-py-sm);
+    padding-bottom: var(--section-py-sm);
+  }
+
+  @media (min-width: 768px) {
+    .nex-section-sm {
+      padding-top: var(--section-py);
+      padding-bottom: var(--section-py);
+    }
+  }
+
+  /* ——— Typography ——— */
+
+  .nex-body-sm {
+    @apply font-sans text-sm leading-relaxed text-muted-foreground;
+  }
+
+  .nex-body {
+    @apply font-sans text-base leading-relaxed text-muted-foreground;
+  }
+
+  .nex-body-lg {
+    @apply font-sans text-lg leading-relaxed text-muted-foreground;
+  }
+
+  .nex-section-label {
+    @apply inline-flex items-center rounded-full border border-border bg-card px-3.5 py-1.5 mb-5 font-sans text-xs font-semibold uppercase text-muted-foreground;
+    letter-spacing: var(--tracking-label);
+  }
+
+  .nex-display {
+    @apply font-sans text-[2.125rem] sm:text-[2.75rem] md:text-[3.25rem] lg:text-[3.5rem] font-bold leading-[1.04] tracking-[-0.035em];
+  }
+
+  .nex-section-title {
+    @apply font-sans text-[1.75rem] sm:text-[2rem] md:text-[2.5rem] lg:text-[2.75rem] font-bold leading-[1.04] tracking-[-0.03em];
+  }
+
+  /* Dual-line headings: Inter Bold + Playfair Display (zelfde grootte, strakke regelafstand) */
+  .nex-type-display-sans {
+    @apply font-sans font-bold text-foreground leading-[1.04] tracking-[-0.035em];
+    @apply text-[2.125rem] sm:text-[2.75rem] md:text-[3.25rem] lg:text-[3.5rem];
+  }
+
+  .nex-type-display-serif {
+    font-family: var(--font-serif);
+    @apply font-medium text-foreground leading-[1.04];
+    @apply text-[2.125rem] sm:text-[2.75rem] md:text-[3.25rem] lg:text-[3.5rem];
+    letter-spacing: 0.002em;
+  }
+
+  .nex-type-section-sans {
+    @apply font-sans font-bold text-foreground leading-[1.04] tracking-[-0.03em];
+    @apply text-[1.75rem] sm:text-[2rem] md:text-[2.5rem] lg:text-[2.75rem];
+  }
+
+  .nex-type-section-serif {
+    font-family: var(--font-serif);
+    @apply font-medium text-foreground leading-[1.04];
+    @apply text-[1.75rem] sm:text-[2rem] md:text-[2.5rem] lg:text-[2.75rem];
+    letter-spacing: 0.002em;
+  }
+
+  .nex-dual-heading {
+    @apply flex flex-col gap-0;
+  }
+
+  .nex-dual-heading-inline {
+    @apply flex flex-row flex-nowrap items-baseline justify-center gap-x-[0.55em];
+  }
+
+  @keyframes nex-tremor {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    16.666% {
+      transform: translateX(-1px);
+    }
+    33.333% {
+      transform: translateX(1px);
+    }
+    50% {
+      transform: translateX(-1px);
+    }
+    66.666% {
+      transform: translateX(1px);
+    }
+    83.333% {
+      transform: translateX(-1px);
+    }
+  }
+
+  .nex-tremor-char {
+    display: inline-block;
+    animation: nex-tremor 0.45s ease-in-out 1 forwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nex-tremor-char {
+      animation: none;
+    }
+  }
+
+  /* Hero B2B/B2C — Inter ExtraBold, gelijke tekenhoogte incl. cijfer 2 */
+  .hero-business-type {
+    @apply inline-flex whitespace-nowrap font-sans font-extrabold text-primary;
+    font-size: 1em;
+    font-variant-numeric: lining-nums tabular-nums;
+    letter-spacing: -0.035em;
+    line-height: 1.04;
+    filter: drop-shadow(0 0 18px hsl(var(--primary) / 0.35));
+  }
+
+  .hero-business-type-char {
+    display: inline-block;
+    font-size: 1em;
+    line-height: 1.04;
+    font-weight: 800;
+  }
+
+  .nex-section-intro {
+    @apply nex-body-lg max-w-2xl;
+  }
+
+  /* Legacy aliases */
+  .nex-heading-serif,
+  .nex-serif-line {
+    font-family: var(--font-serif);
+    @apply font-medium text-foreground;
+    letter-spacing: 0.002em;
+  }
+
+  .nex-accent-serif {
+    font-family: var(--font-serif);
+    @apply font-medium;
+    letter-spacing: 0.002em;
+  }
+
+  .nex-serif-emphasis {
+    font-style: italic;
+    -webkit-text-stroke: 0.35px currentColor;
+    paint-order: stroke fill;
+  }
+
+  .nex-stat-value {
+    @apply font-sans text-3xl sm:text-4xl md:text-[2.5rem] font-semibold tracking-tight text-foreground leading-none;
+  }
+
+  .nex-stat-label {
+    @apply font-sans text-sm text-muted-foreground;
+  }
+
+  .nex-cta-headline {
+    @apply text-[1.875rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.25rem] leading-[1.06] tracking-[-0.035em];
+  }
+
+  .nex-cta-headline-sans {
+    @apply font-sans font-bold text-foreground leading-[1.04] tracking-[-0.035em];
+  }
+
+  .nex-cta-headline-serif {
+    font-family: var(--font-serif);
+    @apply font-medium text-foreground leading-[1.04];
+    letter-spacing: 0.002em;
+  }
+
+  .nex-subsection-title {
+    @apply font-sans text-xl md:text-2xl font-semibold tracking-tight text-foreground leading-tight;
+  }
+
+  .nex-card-title {
+    @apply font-sans text-base md:text-lg font-semibold text-foreground;
+  }
+
+  /* ——— Surfaces & cards ——— */
+
+  .nex-page-hero {
+    @apply pt-28 md:pt-32 pb-16 md:pb-20 lg:pb-24 bg-background nex-hairline-b relative overflow-hidden;
+  }
+
+  .nex-page-hero-muted {
+    @apply pt-28 md:pt-32 pb-16 md:pb-20 lg:pb-24 nex-surface-subtle nex-hairline-b relative overflow-hidden;
+  }
+
+  .nex-page-hero-dots {
+    @apply nex-bg-dots;
+  }
+
+  .nex-card {
+    @apply rounded-2xl border border-border bg-card transition-colors duration-200;
+  }
+
+  .nex-card-shadow {
+    @apply nex-card;
+    box-shadow: var(--shadow-card);
+  }
+
+  .nex-card-hover {
+    @apply nex-card-shadow hover:border-border;
+  }
+
+  .nex-card-hover:hover {
+    box-shadow: var(--shadow-hover);
+  }
+
+  .nex-card-featured {
+    @apply nex-card bg-card z-10;
+    border-color: hsl(var(--foreground) / 0.1);
+    box-shadow: var(--shadow-featured);
+  }
+
+  .nex-pricing-highlight {
+    @apply relative z-10;
+    border-color: hsl(255 80% 60% / 0.35);
+    background-color: hsl(240 5% 96%);
+    box-shadow: var(--shadow-pricing-highlight);
+  }
+
+  .nex-surface-muted {
+    @apply bg-[rgb(var(--surface-muted))];
+  }
+
+  .nex-surface-subtle {
+    @apply bg-[rgb(var(--surface-subtle))];
+  }
+
+  /* ——— Background patterns ——— */
+
+  .nex-bg-dots {
+    background-color: rgb(var(--surface-subtle));
+    background-image: radial-gradient(var(--dot-color) 0.55px, transparent 0.55px);
+    background-size: 20px 20px;
+  }
+
+  .nex-bg-dots-on-subtle {
+    background-color: rgb(var(--surface-muted));
+    background-image: radial-gradient(var(--dot-color) 0.55px, transparent 0.55px);
+    background-size: 20px 20px;
+  }
+
+  .nex-bg-grid {
+    background-color: transparent;
+    background-image:
+      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    -webkit-mask-image:
+      linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%),
+      linear-gradient(to bottom, transparent 0%, black 14%, black 86%, transparent 100%);
+    mask-image:
+      linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%),
+      linear-gradient(to bottom, transparent 0%, black 14%, black 86%, transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
+
+  .nex-bg-grid-dense {
+    background-color: transparent;
+    background-image:
+      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    -webkit-mask-image:
+      linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%),
+      linear-gradient(to bottom, transparent 0%, black 14%, black 86%, transparent 100%);
+    mask-image:
+      linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%),
+      linear-gradient(to bottom, transparent 0%, black 14%, black 86%, transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
+
+  .nex-bg-dots-grid {
+    background-color: rgb(var(--surface-subtle));
+    background-image:
+      radial-gradient(var(--dot-color) 0.55px, transparent 0.55px),
+      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+    background-size: 20px 20px, 48px 48px, 48px 48px;
+    -webkit-mask-image:
+      linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%),
+      linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);
+    mask-image:
+      linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%),
+      linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
+
+  .nex-bg-vlines {
+    background-image: repeating-linear-gradient(
+      to right,
+      transparent,
+      transparent calc(25% - 0.5px),
+      var(--grid-line) calc(25% - 0.5px),
+      var(--grid-line) calc(25% + 0.5px)
+    );
+  }
+
+  .nex-bg-framed {
+    @apply bg-background;
+    box-shadow: inset 0 1px 0 0 var(--line-hairline), inset 0 -1px 0 0 var(--line-hairline);
+  }
+
+  .nex-dot-grid {
+    background-image: radial-gradient(circle at 1px 1px, var(--dot-color) 1px, transparent 0);
+    background-size: 24px 24px;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+  }
+
+  .nex-hairline-t {
+    box-shadow: inset 0 1px 0 0 var(--line-hairline);
+  }
+
+  .nex-hairline-b {
+    box-shadow: inset 0 -1px 0 0 var(--line-hairline);
+  }
+
+  .nex-hairline-y {
+    box-shadow:
+      inset 0 1px 0 0 var(--line-hairline),
+      inset 0 -1px 0 0 var(--line-hairline);
+  }
+
+  .nex-content-frame {
+    @apply relative border-x border-border/40;
+  }
+
+  .nex-footer-grid {
+    background-image:
+      linear-gradient(to right, hsl(0 0% 100% / 0.035) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(0 0% 100% / 0.035) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+
+  .nex-icon-box {
+    @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-muted/50;
+  }
+
+  .nex-badge {
+    @apply inline-flex items-center rounded-full px-3 py-1 font-sans text-xs font-medium;
+  }
+
+  .nex-badge-popular {
+    @apply nex-badge bg-primary/10 text-primary;
+  }
+
+  .nex-badge-orange {
+    @apply nex-badge bg-brand-orange-light text-brand-orange;
+  }
+
+  .nex-text-accent-orange {
+    @apply text-brand-orange;
+  }
+
+  .nex-text-accent {
+    @apply text-primary;
+  }
+
+  .nex-divider {
+    @apply border-t border-border/60;
+  }
+
+  .nex-table-header {
+    @apply font-sans text-xs font-semibold uppercase tracking-wider text-muted-foreground;
+    letter-spacing: var(--tracking-label);
   }
 }
 
 @layer utilities {
-  .gradient-primary {
-    background: var(--gradient-primary);
+  /* ——— Design system typography aliases ——— */
+  .text-display {
+    @apply nex-display;
   }
 
-  .gradient-soft {
-    background: var(--gradient-soft);
+  .text-heading {
+    @apply nex-section-title;
   }
 
-  .gradient-hero {
-    background: var(--gradient-hero);
+  .text-section-title {
+    @apply nex-section-title;
+  }
+
+  .text-body {
+    @apply nex-body;
+  }
+
+  .text-muted {
+    @apply text-muted-foreground;
+  }
+
+  .text-label {
+    @apply nex-section-label;
+  }
+
+  .font-serif-accent {
+    @apply nex-serif-line;
   }
 
   .shadow-soft {
@@ -135,15 +585,20 @@
     box-shadow: var(--shadow-hover);
   }
 
-  .text-gradient {
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  .shadow-featured {
+    box-shadow: var(--shadow-featured);
   }
 
-  .text-accent-warm {
-    color: hsl(35 80% 45%);
+  .shadow-pricing-highlight {
+    box-shadow: var(--shadow-pricing-highlight);
+  }
+
+  .text-brand-purple {
+    color: rgb(var(--brand-purple));
+  }
+
+  .bg-brand-purple {
+    background-color: rgb(var(--brand-purple));
   }
 
   .text-brand-orange {
@@ -158,7 +613,21 @@
     background-color: hsl(var(--brand-orange-light));
   }
 
-  .gradient-orange {
-    background: var(--gradient-orange);
+  @keyframes nex-marquee-left {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  @keyframes nex-marquee-right {
+    from { transform: translateX(-50%); }
+    to { transform: translateX(0); }
+  }
+
+  .nex-marquee-left {
+    animation: nex-marquee-left 42s linear infinite;
+  }
+
+  .nex-marquee-right {
+    animation: nex-marquee-right 42s linear infinite;
   }
 }

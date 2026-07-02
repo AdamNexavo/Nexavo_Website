@@ -1,111 +1,151 @@
-import { motion } from "framer-motion";
-import { TypingText } from "@/components/TypingText";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Phone, Paintbrush, Rocket } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { motion, useInView } from "framer-motion";
+import { NexDualLineTitle } from "@/components/ui/nex-typography";
+import { MessageCircle, Paintbrush, Rocket } from "lucide-react";
+import { NexSection, SectionBadge } from "@/components/ui/nex-ui";
+import { ProcessDashboardSkeleton } from "@/components/sections/ProcessDashboardSkeleton";
+import { cn } from "@/lib/utils";
 
 const steps = [
   {
-    number: "01",
-    icon: Phone,
-    title: "Kennismaken",
-    description: "We bespreken je wensen, doelen en ideeën in een vrijblijvend gesprek.",
-    color: "purple",
+    icon: MessageCircle,
+    title: "Kennis maken",
+    description:
+      "We bespreken je doelen, doelgroep en wensen. Zo weten we precies wat er nodig is voordat we starten.",
   },
   {
-    number: "02",
     icon: Paintbrush,
-    title: "Ontwerp & bouw",
-    description: "Wij gaan aan de slag en houden je op de hoogte van de voortgang.",
-    color: "purple",
+    title: "Ontwerp en bouw",
+    description:
+      "Wij ontwerpen en bouwen je website, inclusief koppelingen en automatiseringen. Jij geeft feedback, wij regelen de rest.",
   },
   {
-    number: "03",
     icon: Rocket,
     title: "Livegang",
-    description: "Je website gaat live en je bent klaar om te groeien. Wij blijven ondersteunen.",
-    color: "purple",
+    description:
+      "Je website gaat live en alles wordt goed ingesteld. Daarna blijven we beschikbaar via onderhoud en support.",
   },
-];
+] as const;
 
 export const Process = () => {
+  const [activeStep, setActiveStep] = useState<0 | 1 | 2>(0);
+  const [autoPlay, setAutoPlay] = useState(true);
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(sectionRef, { amount: 0.35, once: false });
+
+  useEffect(() => {
+    if (!isInView || !autoPlay) return;
+
+    const intervalId = window.setInterval(() => {
+      setActiveStep((current) => ((current + 1) % 3) as 0 | 1 | 2);
+    }, 2000);
+
+    return () => window.clearInterval(intervalId);
+  }, [isInView, autoPlay]);
+
+  const handleStepClick = (index: 0 | 1 | 2) => {
+    setAutoPlay(false);
+    setActiveStep(index);
+  };
+
+  const stepCardBg = (index: number, isActive: boolean) => {
+    const isOuterStep = index === 0 || index === 2;
+    const base = isOuterStep ? "bg-[#fafafa]" : "bg-[#f5f5f7]";
+    const hover = isOuterStep ? "hover:bg-[#f5f5f5]" : "hover:bg-[#f0f0f2]";
+
+    if (isActive) {
+      return cn(
+        base,
+        "border-primary/30 shadow-[0_12px_32px_-20px_hsl(255_80%_60%_/_0.35)]",
+      );
+    }
+
+    return cn(base, "border-border/50", hover, "hover:border-border");
+  };
+
   return (
-    <section className="py-24 bg-white relative">
-      <div className="container">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center max-w-2xl mx-auto mb-16"
-        >
-          <p className="text-sm text-muted-foreground uppercase tracking-wider mb-4">Zo simpel is het</p>
-          <TypingText className="text-4xl md:text-5xl font-extrabold mb-6">
-            Van idee tot{" "}
-            <span className="text-[#6a50ff]">realisatie</span>{" "}
-            in 3 stappen
-          </TypingText>
-          <p className="text-lg text-muted-foreground">
-            Bij Nexavo nemen we je alle zorgen uit handen. Jij focust op ondernemen.
-          </p>
-        </motion.div>
+    <NexSection id="werkwijze" surface="dots-grid" divider className="scroll-mt-28">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+        className="relative z-10 mx-auto mb-12 max-w-2xl text-center md:mb-14"
+      >
+        <SectionBadge className="mx-auto">Zo simpel is het</SectionBadge>
+        <NexDualLineTitle
+          sans="Van idee tot"
+          serif={
+            <>
+              <span className="text-primary">realisatie</span> in drie stappen
+            </>
+          }
+          className="mb-5"
+        />
+        <p className="text-lg text-muted-foreground">
+          Bij Nexavo nemen we je alle zorgen uit handen. Jij focust op ondernemen.
+        </p>
+      </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-16">
-          {steps.map((step, index) => (
-            <motion.div
-              key={step.number}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.15 }}
-              className="relative text-center"
-            >
-              {/* Connector line */}
-              {index < steps.length - 1 && (
-                <div className="hidden md:block absolute top-12 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-[#6a50ff]/30 to-transparent" />
-              )}
-              
-              {/* Number badge */}
-              <div className={`inline-flex items-center justify-center w-10 h-10 rounded-full text-white text-sm font-bold mb-6 ${
-                step.color === "orange" ? "bg-orange-500" : "bg-[#6a50ff]"
-              }`}>
-                {step.number}
-              </div>
-              
-              {/* Icon */}
-              <div className="w-20 h-20 rounded-3xl bg-white shadow-card border border-border/50 flex items-center justify-center mx-auto mb-6">
-                <step.icon className={`w-10 h-10 ${
-                  step.color === "orange" ? "text-orange-500" : "text-[#6a50ff]"
-                }`} />
-              </div>
-              
-              <h3 className="text-xl font-bold mb-3">{step.title}</h3>
-              <p className="text-muted-foreground">{step.description}</p>
-            </motion.div>
-          ))}
+      <div ref={sectionRef} className="relative z-10 mx-auto max-w-7xl">
+        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)] xl:grid-cols-1 xl:gap-6">
+          <div className="space-y-3 xl:grid xl:grid-cols-3 xl:gap-4 xl:space-y-0">
+            {steps.map((step, index) => {
+              const isActive = activeStep === index;
+
+              return (
+                <motion.button
+                  key={step.title}
+                  type="button"
+                  initial={{ opacity: 0, x: -16 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.45, delay: index * 0.08 }}
+                  onClick={() => handleStepClick(index as 0 | 1 | 2)}
+                  className={cn(
+                    "w-full rounded-2xl border p-5 text-left transition-all duration-200 xl:h-full",
+                    stepCardBg(index, isActive),
+                  )}
+                >
+                  <div className="flex gap-4">
+                    <div
+                      className={cn(
+                        "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition-colors",
+                        isActive
+                          ? "border-primary/20 bg-white text-primary"
+                          : "border-border/60 bg-white text-muted-foreground",
+                      )}
+                    >
+                      <step.icon className="h-5 w-5" strokeWidth={1.75} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex items-center gap-2">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-primary">
+                          Stap {index + 1}
+                        </span>
+                      </div>
+                      <h3 className="nex-card-title mb-1.5">{step.title}</h3>
+                      <p className="text-sm leading-relaxed text-muted-foreground">
+                        {step.description}
+                      </p>
+                    </div>
+                  </div>
+                </motion.button>
+              );
+            })}
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.55, delay: 0.1 }}
+            className="min-w-0 lg:sticky lg:top-28"
+          >
+            <ProcessDashboardSkeleton activeStep={activeStep} />
+          </motion.div>
         </div>
-
-        {/* CTA box */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="max-w-2xl mx-auto bg-white rounded-3xl p-8 text-center shadow-card border border-border/50"
-        >
-          <h3 className="text-xl font-bold mb-3">Klaar om te beginnen?</h3>
-          <p className="text-muted-foreground mb-6">
-            Sluit je aan bij tientallen tevreden ondernemers die al zijn overgestapt naar Nexavo.
-          </p>
-          <Link to="/contact">
-            <Button size="lg">
-              Start nu
-              <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
-          </Link>
-          <p className="text-sm text-muted-foreground mt-4">Vrijblijvend kennismakingsgesprek</p>
-        </motion.div>
       </div>
-    </section>
+    </NexSection>
   );
 };

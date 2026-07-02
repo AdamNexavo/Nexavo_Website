@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
-import { TypingText } from "@/components/TypingText";
+import { NexDualLineTitle } from "@/components/ui/nex-typography";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { Link } from "react-router-dom";
+import { SectionLines } from "@/components/backgrounds/section-lines";
 
 const packages = [
   {
@@ -46,8 +47,9 @@ const packages = [
 
 export const Pricing = () => {
   return (
-    <section className="py-24 bg-[#f5f5f7]">
-      <div className="container">
+    <section className="relative overflow-hidden py-24 bg-[#f5f5f7]">
+      <SectionLines />
+      <div className="container relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -58,10 +60,15 @@ export const Pricing = () => {
           <p className="text-sm uppercase tracking-widest text-muted-foreground mb-4">
             Pakketten
           </p>
-          <TypingText className="text-4xl md:text-5xl font-bold mb-6">
-            Kies het pakket dat bij{" "}
-            <span className="text-[#6a50ff]">jou past</span>
-          </TypingText>
+          <NexDualLineTitle
+            sans="Kies het pakket"
+            serif={
+              <>
+                dat bij <span className="text-primary">jou</span> past
+              </>
+            }
+            className="mb-6"
+          />
           <p className="text-lg text-muted-foreground">
             Transparante pakketten zonder verborgen kosten.
           </p>
@@ -97,7 +104,7 @@ export const Pricing = () => {
               <ul className="space-y-4 mb-8">
                 {pkg.features.map((feature) => (
                   <li key={feature} className="flex items-start gap-3">
-                    <Check className={`w-5 h-5 shrink-0 mt-0.5 ${pkg.highlighted ? "text-[#6a50ff]" : "text-[#6a50ff]"}`} />
+                    <Check className={`w-5 h-5 shrink-0 mt-0.5 ${pkg.highlighted ? "text-primary" : "text-primary"}`} />
                     <span className={`text-sm ${pkg.highlighted ? "text-white/90" : "text-muted-foreground"}`}>
                       {feature}
                     </span>

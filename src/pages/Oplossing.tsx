@@ -1,7 +1,7 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Automations } from "@/components/sections/Automations";
-import { Contact } from "@/components/sections/Contact";
+import { BottomCTA } from "@/components/sections/BottomCTA";
 
 const Oplossing = () => {
   return (
@@ -9,7 +9,7 @@ const Oplossing = () => {
       <Header />
       <main>
         <Automations />
-        <Contact />
+        <BottomCTA />
       </main>
       <Footer />
     </div>

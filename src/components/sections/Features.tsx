@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
-import { TypingText } from "@/components/TypingText";
+import { NexDualLineTitle } from "@/components/ui/nex-typography";
+import { SectionLines } from "@/components/backgrounds/section-lines";
 
 const features = [
   "Op maat gemaakt webdesign",
@@ -15,8 +16,9 @@ const features = [
 
 export const Features = () => {
   return (
-    <section className="py-24 bg-[#f5f5f7]">
-      <div className="container">
+    <section className="relative overflow-hidden py-24 bg-[#f5f5f7]">
+      <SectionLines />
+      <div className="container relative z-10">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Image */}
           <motion.div
@@ -45,13 +47,15 @@ export const Features = () => {
             <p className="text-sm uppercase tracking-widest text-muted-foreground mb-4">
               Wat je krijgt
             </p>
-            <TypingText className="text-4xl md:text-5xl font-bold mb-6">
-              Alles wat je nodig hebt voor{" "}
-              <span className="text-[#6a50ff]">online succes</span>
-            </TypingText>
+            <NexDualLineTitle
+              sans="Alles wat je nodig hebt voor"
+              serif={<span className="text-primary">online succes</span>}
+              align="left"
+              className="mb-6"
+            />
             <p className="text-lg text-muted-foreground mb-8">
               Bij elk project leveren we een compleet pakket. Geen losse kosten, 
-              geen verrassingen — gewoon alles wat je nodig hebt om online te groeien.
+              geen verrassingen. Gewoon alles wat je nodig hebt om online te groeien.
             </p>
             
             <div className="grid sm:grid-cols-2 gap-4">
@@ -64,8 +68,8 @@ export const Features = () => {
                   transition={{ duration: 0.3, delay: index * 0.05 }}
                   className="flex items-center gap-3"
                 >
-                  <div className="w-5 h-5 rounded-full bg-[#6a50ff]/10 flex items-center justify-center flex-shrink-0">
-                    <Check className="w-3 h-3 text-[#6a50ff]" />
+                  <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Check className="w-3 h-3 text-primary" />
                   </div>
                   <span className="text-foreground">{feature}</span>
                 </motion.div>

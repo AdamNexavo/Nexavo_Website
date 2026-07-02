@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Palette, Zap, Globe, Star } from "lucide-react";
+import { NexDualLineTitle } from "@/components/ui/nex-typography";
 
 const diensten = [
   {
@@ -37,17 +38,17 @@ export const Solution = () => {
           >
             <div className="bg-[#f5f5f7] rounded-2xl p-3 md:p-4">
               {/* Browser window */}
-              <div className="bg-white rounded-xl shadow-card overflow-hidden">
+              <div className="overflow-hidden rounded-2xl border border-[#e8e6e2] bg-white shadow-[0_20px_60px_-32px_rgba(15,23,42,0.18)]">
                 {/* Browser header */}
-                <div className="bg-gray-100 px-3 py-2 flex items-center gap-2 border-b">
+                <div className="flex items-center gap-2 border-b border-[#ebe8e4] bg-[#f8f7f5] px-3 py-2">
                   <div className="flex gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-red-400"></div>
-                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-400"></div>
-                    <div className="w-2.5 h-2.5 rounded-full bg-green-400"></div>
+                    <div className="h-2.5 w-2.5 rounded-full bg-[#e0ddd8]" />
+                    <div className="h-2.5 w-2.5 rounded-full bg-[#e0ddd8]" />
+                    <div className="h-2.5 w-2.5 rounded-full bg-[#e0ddd8]" />
                   </div>
-                  <div className="flex-1 mx-2">
-                    <div className="bg-white rounded px-3 py-1 text-xs text-muted-foreground flex items-center gap-1.5 max-w-[200px] mx-auto border">
-                      <Globe className="w-3 h-3 text-green-500" />
+                  <div className="mx-2 flex-1">
+                    <div className="mx-auto flex max-w-[200px] items-center gap-1.5 rounded-lg border border-[#ebe8e4] bg-white px-3 py-1 text-xs text-muted-foreground">
+                      <Globe className="h-3 w-3 text-emerald-600" />
                       <span className="truncate">jouwbedrijf.nl</span>
                     </div>
                   </div>
@@ -56,43 +57,43 @@ export const Solution = () => {
                 {/* Clean website skeleton */}
                 <div className="p-5">
                   {/* Navigation skeleton */}
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="w-20 h-6 bg-[#6a50ff] rounded"></div>
+                  <div className="mb-6 flex items-center justify-between">
+                    <div className="h-6 w-20 rounded-lg bg-primary" />
                     <div className="flex gap-4">
-                      <div className="w-12 h-2 bg-gray-200 rounded"></div>
-                      <div className="w-12 h-2 bg-gray-200 rounded"></div>
-                      <div className="w-12 h-2 bg-gray-200 rounded"></div>
+                      <div className="h-2 w-12 rounded bg-[#eceae6]" />
+                      <div className="h-2 w-12 rounded bg-[#eceae6]" />
+                      <div className="h-2 w-12 rounded bg-[#eceae6]" />
                     </div>
                   </div>
                   
                   {/* Hero skeleton */}
-                  <div className="flex gap-6 mb-6">
+                  <div className="mb-6 flex gap-6">
                     <div className="flex-1">
-                      <div className="w-3/4 h-4 bg-gray-800 rounded mb-2"></div>
-                      <div className="w-1/2 h-4 bg-gray-800 rounded mb-4"></div>
-                      <div className="w-full h-2 bg-gray-200 rounded mb-1"></div>
-                      <div className="w-4/5 h-2 bg-gray-200 rounded mb-4"></div>
-                      <div className="w-24 h-8 bg-[#6a50ff] rounded-md"></div>
+                      <div className="mb-2 h-4 w-3/4 rounded bg-foreground/80" />
+                      <div className="mb-4 h-4 w-1/2 rounded bg-foreground/80" />
+                      <div className="mb-1 h-2 w-full rounded bg-[#eceae6]" />
+                      <div className="mb-4 h-2 w-4/5 rounded bg-[#eceae6]" />
+                      <div className="h-8 w-24 rounded-xl bg-primary" />
                     </div>
-                    <div className="w-32 h-24 bg-gradient-to-br from-[#6a50ff]/20 to-orange-100 rounded-lg"></div>
+                    <div className="h-24 w-32 rounded-xl border border-[#ebe8e4] bg-gradient-to-br from-primary/20 to-brand-orange/10" />
                   </div>
                   
                   {/* Cards skeleton */}
                   <div className="flex gap-3">
-                    <div className="flex-1 bg-gray-50 rounded-lg p-3">
-                      <div className="w-8 h-8 bg-[#6a50ff]/20 rounded mb-2"></div>
-                      <div className="w-16 h-2 bg-gray-300 rounded mb-1"></div>
-                      <div className="w-full h-1.5 bg-gray-200 rounded"></div>
+                    <div className="flex-1 rounded-xl border border-[#ebe8e4] bg-[#fafaf9] p-3">
+                      <div className="mb-2 h-8 w-8 rounded-lg bg-primary/20" />
+                      <div className="mb-1 h-2 w-16 rounded bg-[#eceae6]" />
+                      <div className="h-1.5 w-full rounded bg-[#eceae6]" />
                     </div>
-                    <div className="flex-1 bg-gray-50 rounded-lg p-3">
-                      <div className="w-8 h-8 bg-orange-100 rounded mb-2"></div>
-                      <div className="w-16 h-2 bg-gray-300 rounded mb-1"></div>
-                      <div className="w-full h-1.5 bg-gray-200 rounded"></div>
+                    <div className="flex-1 rounded-xl border border-[#ebe8e4] bg-[#fafaf9] p-3">
+                      <div className="mb-2 h-8 w-8 rounded-lg bg-brand-orange/20" />
+                      <div className="mb-1 h-2 w-16 rounded bg-[#eceae6]" />
+                      <div className="h-1.5 w-full rounded bg-[#eceae6]" />
                     </div>
-                    <div className="flex-1 bg-gray-50 rounded-lg p-3">
-                      <div className="w-8 h-8 bg-[#6a50ff]/20 rounded mb-2"></div>
-                      <div className="w-16 h-2 bg-gray-300 rounded mb-1"></div>
-                      <div className="w-full h-1.5 bg-gray-200 rounded"></div>
+                    <div className="flex-1 rounded-xl border border-[#ebe8e4] bg-[#fafaf9] p-3">
+                      <div className="mb-2 h-8 w-8 rounded-lg bg-primary/20" />
+                      <div className="mb-1 h-2 w-16 rounded bg-[#eceae6]" />
+                      <div className="h-1.5 w-full rounded bg-[#eceae6]" />
                     </div>
                   </div>
                 </div>
@@ -105,7 +106,7 @@ export const Solution = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.4 }}
-              className="absolute -right-4 -bottom-4 bg-white rounded-xl shadow-lg p-3 hidden md:block"
+              className="absolute -bottom-4 -right-4 hidden rounded-2xl border border-[#e8e6e2] bg-white p-3 shadow-[0_8px_24px_-16px_rgba(15,23,42,0.14)] md:block"
             >
               <div className="flex items-center gap-2 mb-1">
                 <img
@@ -133,20 +134,16 @@ export const Solution = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <div className="inline-flex items-center gap-2 bg-[#6a50ff]/10 text-[#6a50ff] rounded-full px-4 py-2 mb-6">
+            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-4 py-2 mb-6">
               <span className="text-sm font-semibold">Effectief & professioneel</span>
             </div>
             
-            <motion.h2 
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="text-4xl md:text-5xl font-extrabold mb-6"
-            >
-            Websites die{" "}
-            <span className="text-[#6a50ff]">werken</span>
-            </motion.h2>
+            <NexDualLineTitle
+              sans="Websites die"
+              serif={<span className="text-primary">werken</span>}
+              align="left"
+              className="mb-6"
+            />
             <p className="text-lg text-muted-foreground mb-8">
               Geen standaard templates, maar een website die écht bij jouw bedrijf past. 
               Ontworpen om bezoekers om te zetten in klanten.
@@ -169,10 +166,10 @@ export const Solution = () => {
                   className="flex items-center gap-4 bg-white rounded-xl p-4 shadow-soft border border-border/50 hover:shadow-card"
                 >
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-                    dienst.color === "orange" ? "bg-orange-100" : "bg-[#6a50ff]/10"
+                    dienst.color === "orange" ? "bg-orange-100" : "bg-primary/10"
                   }`}>
                     <dienst.icon className={`w-6 h-6 ${
-                      dienst.color === "orange" ? "text-orange-500" : "text-[#6a50ff]"
+                      dienst.color === "orange" ? "text-orange-500" : "text-primary"
                     }`} />
                   </div>
                   <div>

@@ -4,9 +4,9 @@ import { Hero } from "@/components/sections/Hero";
 import { Benefits } from "@/components/sections/Benefits";
 import { Automations } from "@/components/sections/Automations";
 import { Testimonials } from "@/components/sections/Testimonials";
-import { Process } from "@/components/sections/Process";
+import { WorkShowcase } from "@/components/sections/WorkShowcase";
 import { FAQ } from "@/components/sections/FAQ";
-import { Contact } from "@/components/sections/Contact";
+import { BottomCTA } from "@/components/sections/BottomCTA";
 
 const Home = () => {
   return (
@@ -16,10 +16,10 @@ const Home = () => {
         <Hero />
         <Benefits />
         <Automations />
-        <Process />
         <Testimonials />
+        <WorkShowcase />
         <FAQ />
-        <Contact />
+        <BottomCTA />
       </main>
       <Footer />
     </div>

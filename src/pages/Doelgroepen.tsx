@@ -1,7 +1,7 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Niche } from "@/components/sections/Niche";
-import { Contact } from "@/components/sections/Contact";
+import { BottomCTA } from "@/components/sections/BottomCTA";
 
 const Doelgroepen = () => {
   return (
@@ -9,7 +9,7 @@ const Doelgroepen = () => {
       <Header />
       <main>
         <Niche />
-        <Contact />
+        <BottomCTA />
       </main>
       <Footer />
     </div>
