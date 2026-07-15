@@ -1,3 +1,5 @@
+import { ROUTES } from "@/lib/routes";
+
 export const contactInfo = {
   hours: "09:00 tot 17:00",
   days: "maandag t/m vrijdag",
@@ -6,8 +8,8 @@ export const contactInfo = {
     support: "+31 6 12 34 56 78",
   },
   email: {
-    sales: "info@nexavo.nl",
-    support: "support@nexavo.nl",
+    sales: "info@nexavo.works",
+    support: "support@nexavo.works",
   },
   address: {
     company: "Nexavo",
@@ -18,9 +20,9 @@ export const contactInfo = {
   coffeeNote:
     "Kom gerust langs voor een bakje koffie. Plan je bezoek even van tevoren via het formulier of per mail.",
   whatsapp: "https://wa.me/31612345678",
-  portal: "https://app.nexavo.nl",
+  portal: ROUTES.portal.login,
   responseTime: "Binnen 1 werkdag",
   bookingUrl: "https://calendly.com/nexavo/kennismaking",
-  primaryEmail: "info@nexavo.nl",
+  primaryEmail: "info@nexavo.works",
   primaryPhone: "+31 6 12 34 56 78",
 };

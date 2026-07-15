@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import type { Integration } from "@/data/integrations";
 import {
@@ -34,6 +34,11 @@ export const IntegrationIcon = ({
   const [src, setSrc] = useState(getIntegrationLogoUrl(integration as Integration));
   const [failed, setFailed] = useState(false);
   const isSquareLogo = isSquareIntegrationLogo(integration.slug);
+
+  useEffect(() => {
+    setSrc(getIntegrationLogoUrl(integration as Integration));
+    setFailed(false);
+  }, [integration.slug, integration.iconSlug, integration.logoUrl]);
 
   if (integration.slug === "wero") {
     return (
@@ -94,6 +99,11 @@ export const IntegrationIconTile = ({
   const [failed, setFailed] = useState(false);
   const isSquareLogo = isSquareIntegrationLogo(integration.slug);
 
+  useEffect(() => {
+    setSrc(getIntegrationLogoUrl(integration as Integration));
+    setFailed(false);
+  }, [integration.slug, integration.iconSlug, integration.logoUrl]);
+
   const squareClass = xl
     ? "h-14 w-14"
     : large
@@ -111,7 +121,6 @@ export const IntegrationIconTile = ({
       <WeroLogo className={cn(squareClass, "max-w-none")} />
     ) : !failed ? (
       <img
-        key={src}
         src={src}
         alt={integration.name}
         className={cn("object-contain", isSquareLogo ? squareClass : defaultClass)}

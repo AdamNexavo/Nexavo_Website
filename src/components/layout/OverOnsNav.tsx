@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NavLink } from "@/components/NavLink";
+import { ROUTES } from "@/lib/routes";
 
 type OverOnsItem = {
   label: string;
@@ -52,24 +53,23 @@ type QuickActionItem = {
 const quickActionItems: QuickActionItem[] = [
   {
     label: "Contact",
-    href: "/contact",
+    href: ROUTES.contact,
     icon: MessageCircle,
   },
   {
     label: "Kennisbank",
-    href: "/kennisbank",
+    href: ROUTES.kennisbank,
     icon: BookOpen,
   },
   {
     label: "Plan demo",
-    href: "/contact",
+    href: ROUTES.contact,
     icon: Rocket,
   },
   {
     label: "Klantenportaal",
-    href: "https://app.nexavo.nl",
+    href: ROUTES.portal.login,
     icon: LogIn,
-    external: true,
   },
 ];
 

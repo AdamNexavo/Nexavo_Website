@@ -4,7 +4,7 @@ NEXAVO — kerninformatie
 
 Wie: Nexavo bouwt professionele websites met automatiseringen voor dienstverlenende ondernemers (salons, gyms, coaches, lokale bedrijven). Geen webshops. Werkwijze: demo/advies → Blueprint-workflow → oplevering in 7 tot 10 dagen na complete input.
 
-Contact: info@nexavo.nl · support@nexavo.nl · +31 6 12 34 56 78 · ma-vr 09:00-17:00 · demo: calendly.com/nexavo/kennismaking · klantportaal: app.nexavo.nl
+Contact: info@nexavo.works · support@nexavo.works · +31 6 12 34 56 78 · ma-vr 09:00-17:00 · demo: calendly.com/nexavo/kennismaking · klantportaal: /portal/login
 
 WEBSITEPAKKETTEN (eenmalig, exclusief btw — onderhoud apart):
 • Funnel / One-page — vanaf €745: 1 conversiepagina, formulier, webchat, basis opvolgmail, oplevering 7 dagen

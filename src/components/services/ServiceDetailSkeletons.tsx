@@ -853,7 +853,7 @@ const SeoSearchPreviewVisual = (_props: { id: ServiceSkeletonId }) => (
       </div>
       <div className="space-y-4">
         <div className="rounded-xl bg-primary/[0.05] p-4">
-          <p className="mb-1 text-[10px] text-emerald-700">nexavo.nl/diensten</p>
+          <p className="mb-1 text-[10px] text-emerald-700">nexavo.works/diensten</p>
           <div className="mb-2 h-3 w-44 rounded bg-primary/70" />
           <div className="h-2 w-full rounded bg-muted" />
         </div>

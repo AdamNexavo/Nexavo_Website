@@ -1,6 +1,8 @@
 import type { LucideIcon } from "lucide-react";
 import { Lightbulb, Mail, MessageCircle, Phone, Smartphone } from "lucide-react";
 import { contactInfo } from "@/data/contact";
+import { InternalLink } from "@/components/InternalLink";
+import { ROUTES } from "@/lib/routes";
 
 type ContactColumnProps = {
   label: string;
@@ -41,14 +43,14 @@ type CardButtonProps = {
 };
 
 const CardButton = ({ href, label, external }: CardButtonProps) => (
-  <a
+  <InternalLink
     href={href}
-    {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+    external={external}
     className="flex h-[42px] w-full items-center justify-between rounded-[10px] border border-[#001a1a] bg-white px-4 text-[15px] font-normal text-[#001a1a] transition-colors hover:bg-[#fafafa]"
   >
     <span>{label}</span>
     <span className="text-[18px] leading-none text-[#001a1a]">&rsaquo;</span>
-  </a>
+  </InternalLink>
 );
 
 type IconBadgeProps = {
@@ -134,7 +136,7 @@ const cards = [
     title: "Kennisbank",
     description:
       "Op onze kennisbank vind je artikelen over hoe je Nexavo optimaal inricht en gebruikt.",
-    content: <CardButton href="/kennisbank" label="Naar de kennisbank" />,
+    content: <CardButton href={ROUTES.kennisbank} label="Naar de kennisbank" />,
   },
 ];
 

@@ -4,8 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "start": "vite",
+    "dev": "node scripts/dev-server.mjs",
+    "start": "node scripts/dev-server.mjs",
+    "dev:stop": "node scripts/dev-server.mjs stop",
+    "dev:restart": "node scripts/dev-server.mjs restart",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",

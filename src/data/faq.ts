@@ -57,7 +57,7 @@ export const contactFaqs: FaqItem[] = [
   {
     question: "Hoe kan ik Nexavo bereiken bij vragen?",
     answer:
-      "Je kunt ons bellen op +31 (0)6 12 34 56 78 (maandag t/m vrijdag, 09:00 tot 17:00), mailen naar info@nexavo.nl of support@nexavo.nl, of het contactformulier op deze pagina gebruiken. Bestaande klanten kunnen ook inloggen op het klantportaal.",
+      "Je kunt ons bellen op +31 (0)6 12 34 56 78 (maandag t/m vrijdag, 09:00 tot 17:00), mailen naar info@nexavo.works of support@nexavo.works, of het contactformulier op deze pagina gebruiken. Bestaande klanten kunnen ook inloggen op het klantportaal.",
   },
   {
     question: "Is een demo echt gratis?",
@@ -77,7 +77,7 @@ export const contactFaqs: FaqItem[] = [
   {
     question: "Ik ben al klant. Waar meld ik support?",
     answer:
-      "Gebruik het klantportaal op app.nexavo.nl of mail naar support@nexavo.nl met je klantnummer en bedrijfsnaam. Zo kunnen we je sneller helpen.",
+      "Gebruik het klantportaal (/portal/login) of mail naar support@nexavo.works met je klantnummer en bedrijfsnaam. Zo kunnen we je sneller helpen.",
   },
   {
     question: "Werken jullie alleen in Nederland?",

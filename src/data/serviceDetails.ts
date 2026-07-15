@@ -475,7 +475,7 @@ export const serviceDetails: Record<string, ServiceDetailContent> = {
           "SSL-certificaat en basisbeveiliging",
           "Basiscontrole op bereikbaarheid",
           "Periodieke back-ups waar technisch mogelijk",
-          "Support via klantportaal of support@nexavo.nl",
+          "Support via klantportaal of support@nexavo.works",
         ],
       },
       {
@@ -509,7 +509,7 @@ export const serviceDetails: Record<string, ServiceDetailContent> = {
       {
         title: "Klantportaal, support en verwerking",
         paragraphs: [
-          "Revisieverzoeken lopen bij voorkeur via het Nexavo klantportaal. Als dat nog niet beschikbaar is, kun je mailen naar support@nexavo.nl met je klantnummer en bedrijfsnaam.",
+          "Revisieverzoeken lopen bij voorkeur via het Nexavo klantportaal. Als dat nog niet beschikbaar is, kun je mailen naar support@nexavo.works met je klantnummer en bedrijfsnaam.",
           "Bij elk verzoek ontvang je een bevestiging. Daarna beoordelen we of het verzoek binnen je pakket valt, aanvullende input nodig heeft of als meerwerk voorgesteld moet worden.",
         ],
         bullets: [

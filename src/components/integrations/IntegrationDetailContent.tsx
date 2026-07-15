@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { ROUTES } from "@/lib/routes";
 import {
   ArrowLeft,
   BookOpen,
@@ -96,15 +97,13 @@ export const IntegrationDetailContent = ({
                   </p>
                   <ul className="space-y-2">
                     <li>
-                      <a
-                        href="https://nexavo.nl"
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <Link
+                        to={ROUTES.home}
                         className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                       >
                         <Globe className="w-4 h-4" />
                         Website
-                      </a>
+                      </Link>
                     </li>
                     <li>
                       <Link

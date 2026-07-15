@@ -29,7 +29,7 @@ export const maintenancePackages: MaintenancePackage[] = [
       "Basiscontrole op bereikbaarheid",
       "Domein- en DNS-ondersteuning indien via Nexavo",
       "Periodieke back-ups waar technisch mogelijk",
-      "Support via klantportaal of support@nexavo.nl",
+      "Support via klantportaal of support@nexavo.works",
       "Maximaal 5 afbeeldingen vervangen of toevoegen",
       "Maximaal 1 aangeleverd blogartikel plaatsen",
       "Maximaal 1 eenvoudige video-embed plaatsen",

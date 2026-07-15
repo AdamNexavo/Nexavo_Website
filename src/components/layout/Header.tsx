@@ -16,9 +16,11 @@ import { NexavoLogo } from "@/components/layout/NexavoLogo";
 import { Separator } from "@/components/ui/separator";
 import { getHeroScrollEnd } from "@/lib/heroScroll";
 
+import { ROUTES } from "@/lib/routes";
+
 const navItems = [
-  { label: "Prijzen", href: "/pricing" },
-  { label: "Contact", href: "/contact" },
+  { label: "Prijzen", href: ROUTES.pricing },
+  { label: "Contact", href: ROUTES.contact },
 ];
 
 export const Header = () => {
@@ -90,23 +92,18 @@ export const Header = () => {
         </div>
 
         <div className="hidden items-center gap-2.5 lg:flex">
-          <a
-            href="https://app.nexavo.nl"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className={cn(
+              !atHero && "border-border/60 bg-[#f5f5f7] hover:bg-[#ececea]",
+              atHero &&
+                "border-white/25 bg-white/[0.12] text-white shadow-none backdrop-blur-sm hover:border-white/35 hover:bg-white/20 hover:text-white",
+            )}
           >
-            <Button
-              variant="outline"
-              size="sm"
-              className={cn(
-                !atHero && "border-border/60 bg-[#f5f5f7] hover:bg-[#ececea]",
-                atHero &&
-                  "border-white/25 bg-white/[0.12] text-white shadow-none backdrop-blur-sm hover:border-white/35 hover:bg-white/20 hover:text-white",
-              )}
-            >
-              Login klantenportaal
-            </Button>
-          </a>
+            <Link to={ROUTES.portal.login}>Login klantenportaal</Link>
+          </Button>
           <Button
             asChild
             size="sm"
@@ -116,7 +113,7 @@ export const Header = () => {
                 "border-white bg-white text-foreground shadow-none hover:bg-white/90 hover:text-foreground",
             )}
           >
-            <Link to="/contact">Plan demo</Link>
+            <Link to={ROUTES.contact}>Plan demo</Link>
           </Button>
         </div>
 
@@ -156,17 +153,12 @@ export const Header = () => {
                 </NavLink>
               ))}
               <Separator className="my-4" />
-              <a
-                href="https://app.nexavo.nl"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setIsOpen(false)}
-              >
+              <Link to={ROUTES.portal.login} onClick={() => setIsOpen(false)}>
                 <Button variant="outline" className="mb-2 w-full border-border/60 bg-[#f5f5f7] hover:bg-[#ececea]">
                   Login klantenportaal
                 </Button>
-              </a>
-              <Link to="/contact" onClick={() => setIsOpen(false)}>
+              </Link>
+              <Link to={ROUTES.contact} onClick={() => setIsOpen(false)}>
                 <Button variant="default" className="w-full">
                   Plan demo
                 </Button>
