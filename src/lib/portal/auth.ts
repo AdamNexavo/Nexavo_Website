@@ -1,3 +1,4 @@
+import type { User } from "@supabase/supabase-js";
 import type { ClientAccount, PortalSession, PortalUser } from "./types";
 import {
   createDefaultOnboarding,
@@ -52,43 +53,57 @@ export function getAdminCredentials() {
   };
 }
 
+export async function resolvePortalSessionFromSupabaseUser(
+  user: User,
+): Promise<PortalSession | null> {
+  if (isPortalAdminUser(user)) {
+    try {
+      await refreshPortalStorage();
+    } catch (cause) {
+      console.warn("Kon portaldata niet laden voor admin:", cause);
+    }
+    return {
+      type: "admin",
+      email: user.email ?? DEFAULT_ADMIN_EMAIL,
+      loggedInAt: new Date().toISOString(),
+    };
+  }
+
+  const client = await fetchClientByAuthUserId(user.id);
+  if (!client?.active) return null;
+
+  try {
+    await refreshPortalStorage();
+  } catch (cause) {
+    console.warn("Kon portaldata niet laden voor klant:", cause);
+  }
+
+  return {
+    type: "client",
+    clientId: client.id,
+    email: client.email,
+    loggedInAt: new Date().toISOString(),
+  };
+}
+
 async function restoreSupabaseSession(): Promise<PortalSession | null> {
   if (!isSupabasePortalEnabled()) return getSession();
 
-  await initPortalStorage();
   const supabase = getSupabaseClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();
   if (!session?.user) return null;
 
-  if (isPortalAdminUser(session.user)) {
-    await refreshPortalStorage();
-    const adminSession: PortalSession = {
-      type: "admin",
-      email: session.user.email ?? DEFAULT_ADMIN_EMAIL,
-      loggedInAt: new Date().toISOString(),
-    };
-    setSession(adminSession);
-    return adminSession;
-  }
-
-  const client = await fetchClientByAuthUserId(session.user.id);
-  if (!client?.active) {
+  const portalSession = await resolvePortalSessionFromSupabaseUser(session.user);
+  if (!portalSession) {
     await supabase.auth.signOut();
     setSession(null);
     return null;
   }
 
-  await refreshPortalStorage();
-  const clientSession: PortalSession = {
-    type: "client",
-    clientId: client.id,
-    email: client.email,
-    loggedInAt: new Date().toISOString(),
-  };
-  setSession(clientSession);
-  return clientSession;
+  setSession(portalSession);
+  return portalSession;
 }
 
 export async function bootstrapPortalAuth(): Promise<PortalSession | null> {
@@ -124,12 +139,11 @@ export async function loginAdmin(
           error: "Dit account heeft geen admin-rechten. Gebruik admin@nexavo.works.",
         };
       }
-      await refreshPortalStorage();
-      const session: PortalSession = {
-        type: "admin",
-        email: data.user.email ?? email.toLowerCase(),
-        loggedInAt: new Date().toISOString(),
-      };
+      const session = await resolvePortalSessionFromSupabaseUser(data.user);
+      if (!session) {
+        await supabase.auth.signOut();
+        return { session: null, error: "Admin-sessie kon niet worden opgestart." };
+      }
       setSession(session);
       return { session };
     } catch (cause) {

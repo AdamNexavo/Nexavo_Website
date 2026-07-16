@@ -58,13 +58,23 @@ export async function initPortalStorage(): Promise<void> {
   if (storageInitPromise) return storageInitPromise;
 
   storageInitPromise = (async () => {
-    supabaseClientsCache = await fetchAllClientsFromSupabase();
-    supabaseInvitesCache = await fetchAllInvitesFromSupabase();
+    try {
+      supabaseClientsCache = await fetchAllClientsFromSupabase();
+      supabaseInvitesCache = await fetchAllInvitesFromSupabase();
+    } catch (cause) {
+      console.warn("Kon portaldata niet laden:", cause);
+      supabaseClientsCache = [];
+      supabaseInvitesCache = [];
+    }
 
-    unsubscribeRealtime?.();
-    unsubscribeRealtime = subscribeToPortalClients(() => {
-      void reloadSupabaseCache();
-    });
+    try {
+      unsubscribeRealtime?.();
+      unsubscribeRealtime = subscribeToPortalClients(() => {
+        void reloadSupabaseCache();
+      });
+    } catch (cause) {
+      console.warn("Realtime sync niet beschikbaar:", cause);
+    }
   })();
 
   return storageInitPromise;

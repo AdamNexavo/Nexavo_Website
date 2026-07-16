@@ -11,7 +11,7 @@ export default function AdminLoginPage() {
   const [email, setEmail] = useState("admin@nexavo.works");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { loginAsAdmin, isAdmin, isLoading } = usePortalAuth();
+  const { loginAsAdmin, isAdmin } = usePortalAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -47,8 +47,8 @@ export default function AdminLoginPage() {
           <Label className="text-[#0B0B0D]">Wachtwoord</Label>
           <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="mt-1.5 h-11 rounded-[12px] border-black/[0.12]" />
         </div>
-        <Button type="submit" className="h-11 w-full rounded-[12px] bg-[#7547F8] hover:bg-[#6840E0]" disabled={loading || isLoading}>
-          {loading || isLoading ? "Bezig..." : "Inloggen"}
+        <Button type="submit" className="h-11 w-full rounded-[12px] bg-[#7547F8] hover:bg-[#6840E0]" disabled={loading}>
+          {loading ? "Bezig..." : "Inloggen"}
         </Button>
       </form>
       <p className="mt-6 text-center text-[14px] text-[#6B7280]">

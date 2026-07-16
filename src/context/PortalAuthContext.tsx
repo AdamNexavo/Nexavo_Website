@@ -4,20 +4,22 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import type { ClientAccount, PortalSession } from "@/lib/portal/types";
 import {
-  bootstrapPortalAuth,
   loginAdmin,
   loginClient,
   logout as authLogout,
   registerClient,
+  resolvePortalSessionFromSupabaseUser,
 } from "@/lib/portal/auth";
-import { getClientById, initPortalStorage, refreshPortalStorage } from "@/lib/portal/storage";
+import { getClientById, getSession, initPortalStorage, refreshPortalStorage, setSession } from "@/lib/portal/storage";
 import { migrateClient } from "@/lib/portal/types";
-import { isSupabasePortalEnabled } from "@/lib/portal/supabase-client";
+import { ensureDemoAccounts } from "@/lib/portal/demo-seed";
+import { getSupabaseClient, isSupabasePortalEnabled } from "@/lib/portal/supabase-client";
 
 interface PortalAuthContextValue {
   session: PortalSession | null;
@@ -41,10 +43,29 @@ interface PortalAuthContextValue {
 
 const PortalAuthContext = createContext<PortalAuthContextValue | null>(null);
 
+function applyPortalSession(
+  portalSession: PortalSession | null,
+  setSessionState: (value: PortalSession | null) => void,
+  setClient: (value: ClientAccount | null) => void,
+) {
+  setSessionState(portalSession);
+  if (portalSession) setSession(portalSession);
+  else setSession(null);
+
+  if (portalSession?.type === "client" && portalSession.clientId) {
+    const loaded = getClientById(portalSession.clientId);
+    setClient(loaded ? migrateClient(loaded) : null);
+    return;
+  }
+
+  setClient(null);
+}
+
 export function PortalAuthProvider({ children }: { children: ReactNode }) {
   const [session, setSessionState] = useState<PortalSession | null>(null);
   const [client, setClient] = useState<ClientAccount | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const manualLoginRef = useRef(false);
 
   const loadClientFromSession = useCallback((current: PortalSession | null) => {
     if (current?.type === "client" && current.clientId) {
@@ -66,33 +87,57 @@ export function PortalAuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
+    let unsubscribeAuth: (() => void) | undefined;
 
     void (async () => {
+      void initPortalStorage().catch((cause) => {
+        console.warn("Portal storage init mislukt:", cause);
+      });
+
       try {
-        await initPortalStorage();
-        const current = await bootstrapPortalAuth();
-        if (cancelled) return;
+        if (isSupabasePortalEnabled()) {
+          const supabase = getSupabaseClient();
+          const {
+            data: { session: existingSession },
+          } = await supabase.auth.getSession();
 
-        setSessionState((existing) => {
-          if (existing && !current) return existing;
-          return current;
-        });
-
-        if (current?.type === "client" && current.clientId) {
-          const loaded = getClientById(current.clientId);
-          if (!loaded) {
-            void authLogout();
-            if (!cancelled) {
-              setSessionState(null);
-              setClient(null);
+          if (!cancelled && existingSession?.user) {
+            const portalSession = await resolvePortalSessionFromSupabaseUser(existingSession.user);
+            if (portalSession && !cancelled) {
+              applyPortalSession(portalSession, setSessionState, setClient);
             }
-            return;
           }
-          if (!cancelled) setClient(migrateClient(loaded));
+
+          const {
+            data: { subscription },
+          } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+            if (cancelled) return;
+
+            void (async () => {
+              if (!nextSession?.user) {
+                if (manualLoginRef.current) return;
+                applyPortalSession(null, setSessionState, setClient);
+                return;
+              }
+
+              const portalSession = await resolvePortalSessionFromSupabaseUser(nextSession.user);
+              if (!portalSession) {
+                await supabase.auth.signOut();
+                applyPortalSession(null, setSessionState, setClient);
+                return;
+              }
+
+              applyPortalSession(portalSession, setSessionState, setClient);
+            })();
+          });
+
+          unsubscribeAuth = () => subscription.unsubscribe();
           return;
         }
 
-        if (!cancelled) setClient(null);
+        ensureDemoAccounts();
+        const current = getSession();
+        if (!cancelled) applyPortalSession(current, setSessionState, setClient);
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -100,31 +145,34 @@ export function PortalAuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       cancelled = true;
+      unsubscribeAuth?.();
     };
   }, []);
 
-  const login = useCallback(
-    async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
+    manualLoginRef.current = true;
+    try {
       const result = await loginClient(email, password);
       if (!result) return { ok: false, error: "Onjuist e-mailadres of wachtwoord." };
-      setSessionState(result);
-      if (result.clientId) {
-        const loaded = getClientById(result.clientId);
-        setClient(loaded ? migrateClient(loaded) : null);
-      }
+      applyPortalSession(result, setSessionState, setClient);
       return { ok: true };
-    },
-    [],
-  );
+    } finally {
+      manualLoginRef.current = false;
+    }
+  }, []);
 
   const loginAsAdmin = useCallback(async (email: string, password: string) => {
-    const result = await loginAdmin(email, password);
-    if (!result.session) {
-      return { ok: false, error: result.error ?? "Onjuiste admin-gegevens." };
+    manualLoginRef.current = true;
+    try {
+      const result = await loginAdmin(email, password);
+      if (!result.session) {
+        return { ok: false, error: result.error ?? "Onjuiste admin-gegevens." };
+      }
+      applyPortalSession(result.session, setSessionState, setClient);
+      return { ok: true };
+    } finally {
+      manualLoginRef.current = false;
     }
-    setSessionState(result.session);
-    setClient(null);
-    return { ok: true };
   }, []);
 
   const register = useCallback(
@@ -136,26 +184,33 @@ export function PortalAuthProvider({ children }: { children: ReactNode }) {
       companyName: string;
       inviteToken?: string;
     }) => {
-      const result = await registerClient(params);
-      if (result.error) return { ok: false, error: result.error };
-      if (result.client) {
-        setSessionState({
-          type: "client",
-          clientId: result.client.id,
-          email: result.client.email,
-          loggedInAt: new Date().toISOString(),
-        });
-        setClient(result.client);
+      manualLoginRef.current = true;
+      try {
+        const result = await registerClient(params);
+        if (result.error) return { ok: false, error: result.error };
+        if (result.client) {
+          applyPortalSession(
+            {
+              type: "client",
+              clientId: result.client.id,
+              email: result.client.email,
+              loggedInAt: new Date().toISOString(),
+            },
+            setSessionState,
+            setClient,
+          );
+        }
+        return { ok: true };
+      } finally {
+        manualLoginRef.current = false;
       }
-      return { ok: true };
     },
     [],
   );
 
   const logout = useCallback(async () => {
     await authLogout();
-    setSessionState(null);
-    setClient(null);
+    applyPortalSession(null, setSessionState, setClient);
   }, []);
 
   const value = useMemo(
@@ -174,9 +229,7 @@ export function PortalAuthProvider({ children }: { children: ReactNode }) {
     [session, client, isLoading, login, loginAsAdmin, register, logout, refreshClient],
   );
 
-  return (
-    <PortalAuthContext.Provider value={value}>{children}</PortalAuthContext.Provider>
-  );
+  return <PortalAuthContext.Provider value={value}>{children}</PortalAuthContext.Provider>;
 }
 
 export function usePortalAuth() {
