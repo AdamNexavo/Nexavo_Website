@@ -62,7 +62,7 @@ const stepMeta: Record<
   },
 };
 
-const cardClass = "rounded-2xl border border-[#e8e6e2] bg-white p-5 md:p-6";
+const cardClass = "rounded-2xl border border-[#e8e6e2] bg-white p-5 md:p-6 shadow-card";
 
 const NavLink = ({
   item,
@@ -90,7 +90,7 @@ const Sidebar = ({ activeStep }: { activeStep: ProcessStepId }) => (
   <aside className="flex w-[200px] shrink-0 flex-col border-r border-[#ebe8e4] bg-[#f8f7f5] px-3 py-4 md:w-[216px] md:px-4 md:py-5">
     <button
       type="button"
-      className="mb-5 flex w-full items-center gap-2.5 rounded-xl border border-[#ebe8e4] bg-white px-2.5 py-2 text-left shadow-sm"
+      className="mb-5 flex w-full items-center gap-2.5 rounded-xl border border-[#ebe8e4] bg-white shadow-block px-2.5 py-2 text-left shadow-sm"
     >
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-xs font-bold text-white">
         J
@@ -132,7 +132,7 @@ const Sidebar = ({ activeStep }: { activeStep: ProcessStepId }) => (
     <div className="mt-4 space-y-2 border-t border-[#ebe8e4] pt-4">
       <button
         type="button"
-        className="flex w-full items-center gap-2.5 rounded-xl border border-[#ebe8e4] bg-white px-2.5 py-2 text-left"
+        className="flex w-full items-center gap-2.5 rounded-xl border border-[#ebe8e4] bg-white shadow-block px-2.5 py-2 text-left"
       >
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#e8e6e2] text-[10px] font-semibold text-foreground">
           JD
@@ -169,7 +169,7 @@ const StepZeroContent = () => (
         ].map((field) => (
           <div key={field.label} className={field.label === "Contactpersoon" ? "sm:col-span-2" : ""}>
             <p className="mb-1 text-[11px] text-muted-foreground">{field.label}</p>
-            <div className="rounded-xl border border-[#ebe8e4] bg-[#fafaf9] px-3 py-2.5 text-xs font-medium text-foreground">
+            <div className="rounded-xl border border-[#ebe8e4] bg-[#fafaf9] shadow-block px-3 py-2.5 text-xs font-medium text-foreground">
               {field.value}
             </div>
           </div>
@@ -219,14 +219,14 @@ const StepZeroContent = () => (
           {["Calendly", "Google Maps", "Mollie", "Reviews"].map((tag) => (
             <span
               key={tag}
-              className="rounded-lg border border-[#ebe8e4] bg-[#fafaf9] px-2.5 py-1 text-[11px] font-medium text-foreground"
+              className="rounded-lg border border-[#ebe8e4] bg-[#fafaf9] shadow-block px-2.5 py-1 text-[11px] font-medium text-foreground"
             >
               {tag}
             </span>
           ))}
         </div>
         <p className="mb-1.5 text-[11px] text-muted-foreground">Opmerkingen</p>
-        <div className="rounded-xl border border-[#ebe8e4] bg-[#fafaf9] p-3 text-xs leading-relaxed text-muted-foreground">
+        <div className="rounded-xl border border-[#ebe8e4] bg-[#fafaf9] shadow-block p-3 text-xs leading-relaxed text-muted-foreground">
           We willen een strakke site met boekingen en automatische opvolgmails.
         </div>
         <button
@@ -279,7 +279,7 @@ const StepOneContent = () => (
       </div>
       <p className="mb-1 text-[11px] text-muted-foreground">Omgeving</p>
       <p className="mb-3 text-sm font-semibold text-primary">preview.jouwbedrijf.nl</p>
-      <div className="mb-3 overflow-hidden rounded-xl border border-[#ebe8e4] bg-[#fafaf9]">
+      <div className="mb-3 overflow-hidden rounded-xl border border-[#ebe8e4] bg-[#fafaf9] shadow-block">
         <div className="border-b border-[#ebe8e4] px-3 py-1.5 text-[10px] text-muted-foreground">
           Homepage · concept
         </div>

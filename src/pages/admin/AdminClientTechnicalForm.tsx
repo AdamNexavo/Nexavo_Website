@@ -11,7 +11,11 @@ import {
   isTechnicalSetupComplete,
   getTechnicalSetupMissing,
   getProviderLabel,
+  TECHNICAL_CHECKLIST_ITEMS,
+  syncTechnicalChecklist,
+  getRequiredChecklistComplete,
 } from "@/lib/portal/websites";
+import type { TechnicalSetupChecklist, PixelType } from "@/lib/portal/types";
 
 type Props = {
   client: ClientAccount;
@@ -24,17 +28,40 @@ export function AdminClientTechnicalForm({ client, onSave }: Props) {
   const missing = getTechnicalSetupMissing(setup);
   const loginUrl = resolveProviderLoginUrl(setup.hostingProvider, setup.providerLoginUrl);
 
+  const persist = (partial: Partial<ClientTechnicalSetup>) => {
+    onSave(
+      syncTechnicalChecklist({
+        ...setup,
+        ...partial,
+        updatedAt: new Date().toISOString(),
+      }),
+    );
+  };
+
+  const updateChecklist = (key: keyof TechnicalSetupChecklist, value: boolean) => {
+    const checklist = { ...setup.checklist, [key]: value };
+    if (key === "pixelAdded") {
+      persist({ checklist, pixelInstalled: value });
+      return;
+    }
+    if (key === "technicallyComplete") {
+      if (value && !getRequiredChecklistComplete({ ...setup, checklist })) return;
+      persist({ checklist });
+      return;
+    }
+    persist({ checklist });
+  };
+
   const update = (partial: Partial<ClientTechnicalSetup>) => {
-    onSave({
-      ...setup,
-      ...partial,
-      updatedAt: new Date().toISOString(),
-    });
+    persist(partial);
   };
 
   const markComplete = () => {
-    if (!isTechnicalSetupComplete(setup)) return;
-    onSave({ ...setup, completed: true, updatedAt: new Date().toISOString() });
+    if (!getRequiredChecklistComplete(setup)) return;
+    persist({
+      completed: true,
+      checklist: { ...setup.checklist, technicallyComplete: true },
+    });
   };
 
   return (
@@ -52,7 +79,7 @@ export function AdminClientTechnicalForm({ client, onSave }: Props) {
             <div>
               <h3 className="font-semibold text-[#111111]">Technische setup</h3>
               <p className="mt-1 text-[13px] text-[#6B7280]">
-                Verplicht voor elke klant in het CRM — hosting, domein en DNS-gegevens.
+                Checklist voor technische oplevering. DNS is optioneel — niet verplicht voor afronding.
               </p>
               {!complete && missing.length > 0 && (
                 <p className="mt-2 text-[12px] text-[#B45309]">
@@ -64,6 +91,29 @@ export function AdminClientTechnicalForm({ client, onSave }: Props) {
           <ReferenceBadge variant={complete ? "green" : "default"}>
             {setup.completed ? "Afgerond" : complete ? "Klaar om af te ronden" : "Onvolledig"}
           </ReferenceBadge>
+        </div>
+      </ReferenceCard>
+
+      <ReferenceCard>
+        <h4 className="mb-3 text-[14px] font-semibold">Technische checklist</h4>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {TECHNICAL_CHECKLIST_ITEMS.map((item) => (
+            <label
+              key={item.key}
+              className="flex items-center gap-2 rounded-[10px] border border-[#E2E0DB] bg-white px-3 py-2.5 text-[13px]"
+            >
+              <input
+                type="checkbox"
+                checked={setup.checklist?.[item.key] ?? false}
+                onChange={(e) => updateChecklist(item.key, e.target.checked)}
+                className="rounded border-[#D1D5DB]"
+              />
+              <span>
+                {item.label}
+                {!item.required && <span className="ml-1 text-[11px] text-[#9CA3AF]">(optioneel)</span>}
+              </span>
+            </label>
+          ))}
         </div>
       </ReferenceCard>
 
@@ -83,7 +133,7 @@ export function AdminClientTechnicalForm({ client, onSave }: Props) {
                     providerLoginUrl: preset?.loginUrl || setup.providerLoginUrl,
                   });
                 }}
-                className="mt-1.5 h-11 w-full rounded-[12px] border border-[#E5E5E5] bg-white px-3 text-[14px]"
+                className="mt-1.5 h px-3 text-[14px]"
               >
                 <option value="">Selecteer provider...</option>
                 {HOSTING_PROVIDERS.map((p) => (
@@ -144,7 +194,7 @@ export function AdminClientTechnicalForm({ client, onSave }: Props) {
               <select
                 value={setup.domainOwnership ?? "client"}
                 onChange={(e) => update({ domainOwnership: e.target.value as "client" | "nexavo" })}
-                className="mt-1.5 h-11 w-full rounded-[12px] border border-[#E5E5E5] bg-white px-3 text-[14px]"
+                className="mt-1.5 h px-3 text-[14px]"
               >
                 <option value="client">Klant heeft eigen domein</option>
                 <option value="nexavo">Via Nexavo geregistreerd</option>
@@ -157,7 +207,7 @@ export function AdminClientTechnicalForm({ client, onSave }: Props) {
                 onChange={(e) =>
                   update({ dnsManagedBy: e.target.value as "client" | "nexavo" | "provider" })
                 }
-                className="mt-1.5 h-11 w-full rounded-[12px] border border-[#E5E5E5] bg-white px-3 text-[14px]"
+                className="mt-1.5 h px-3 text-[14px]"
               >
                 <option value="client">Klant</option>
                 <option value="nexavo">Nexavo</option>
@@ -228,21 +278,47 @@ export function AdminClientTechnicalForm({ client, onSave }: Props) {
         </div>
 
         <div className="border-t border-[#E5E5E5] pt-5">
-          <h4 className="mb-3 text-[14px] font-semibold">Tracking (later)</h4>
-          <label className="flex items-center gap-2 text-[14px]">
+          <h4 className="mb-3 text-[14px] font-semibold">Pixel & tracking</h4>
+          <label className="mb-3 flex items-center gap-2 text-[14px]">
             <input
               type="checkbox"
-              checked={setup.pixelInstalled ?? false}
-              onChange={(e) => update({ pixelInstalled: e.target.checked })}
+              checked={setup.pixelInstalled ?? setup.checklist?.pixelAdded ?? false}
+              onChange={(e) => updateChecklist("pixelAdded", e.target.checked)}
               className="rounded border-[#D1D5DB]"
             />
-            Analytics-pixel geïnstalleerd
+            Pixel toegevoegd
           </label>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <Label>Pixel type</Label>
+              <select
+                value={setup.pixelType ?? ""}
+                onChange={(e) => update({ pixelType: (e.target.value || undefined) as PixelType | undefined })}
+                className="mt-1.5 h px-3 text-[14px]"
+              >
+                <option value="">—</option>
+                <option value="meta">Meta Pixel</option>
+                <option value="tiktok">TikTok Pixel</option>
+                <option value="google_ads">Google Ads Tag</option>
+                <option value="google_analytics">Google Analytics</option>
+                <option value="other">Anders</option>
+              </select>
+            </div>
+            <div>
+              <Label>Pixel ID</Label>
+              <Input
+                value={setup.pixelId ?? ""}
+                onChange={(e) => update({ pixelId: e.target.value })}
+                className="mt-1.5 rounded-[12px] bg-white"
+                placeholder="Pixel / measurement ID"
+              />
+            </div>
+          </div>
           <Textarea
             value={setup.pixelNotes ?? ""}
             onChange={(e) => update({ pixelNotes: e.target.value })}
             className="mt-3 min-h-[60px] rounded-[12px] bg-white text-[13px]"
-            placeholder="Pixel-ID, Tag Manager, etc."
+            placeholder="Opmerking over tracking setup..."
           />
         </div>
 
@@ -256,7 +332,7 @@ export function AdminClientTechnicalForm({ client, onSave }: Props) {
         </div>
 
         <div className="flex flex-wrap gap-2 border-t border-[#E5E5E5] pt-4">
-          <Button variant="default" onClick={markComplete} disabled={!complete}>
+          <Button variant="default" onClick={markComplete} disabled={!getRequiredChecklistComplete(setup)}>
             Opslaan & als afgerond markeren
           </Button>
           <Button

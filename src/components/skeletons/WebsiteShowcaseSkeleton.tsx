@@ -113,7 +113,7 @@ export const WebsiteShowcaseSkeleton = ({
             ].map((item) => (
               <div
                 key={item.title}
-                className="rounded-xl border border-[#ebe8e4] bg-[#fafaf9] px-2 py-2 md:px-3 md:py-2.5"
+                className="rounded-xl border border-[#ebe8e4] bg-[#fafaf9] shadow-block px-2 py-2 md:px-3 md:py-2.5"
               >
                 <p className="text-[9px] font-semibold text-foreground">{item.title}</p>
                 <p className="text-[8px] text-muted-foreground md:text-[9px]">{item.sub}</p>

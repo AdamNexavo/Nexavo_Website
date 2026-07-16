@@ -7,10 +7,10 @@ import {
   createAssistantMessage,
   createUserMessage,
   sendChatMessage,
-  WELCOME_MESSAGE,
+  PORTAL_WELCOME_MESSAGE,
+  PORTAL_SUGGESTED_QUESTIONS,
   type ChatMessage,
 } from "@/lib/chatbot/chatService";
-import { suggestedQuestions } from "@/lib/chatbot/knowledge";
 import { ROUTES } from "@/lib/routes";
 
 function formatMessage(content: string) {
@@ -23,7 +23,7 @@ function formatMessage(content: string) {
 
 export function PortalInlineChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    createAssistantMessage(WELCOME_MESSAGE),
+    createAssistantMessage(PORTAL_WELCOME_MESSAGE),
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -61,7 +61,7 @@ export function PortalInlineChat() {
         </span>
         <div>
           <p className="text-[14px] font-semibold text-[#0B0B0D]">Nexavo assistent</p>
-          <p className="text-[12px] text-[#6B7280]">Stel je vraag — we helpen je direct</p>
+          <p className="text-[12px] text-[#6B7280]">Support voor je lopende project</p>
         </div>
       </div>
 
@@ -87,7 +87,7 @@ export function PortalInlineChat() {
 
       <div className="border-t border-black/[0.06] p-4">
         <div className="mb-3 flex flex-wrap gap-2">
-          {suggestedQuestions.slice(0, 3).map((q) => (
+          {PORTAL_SUGGESTED_QUESTIONS.map((q) => (
             <button
               key={q}
               type="button"
@@ -108,7 +108,7 @@ export function PortalInlineChat() {
                 send(input);
               }
             }}
-            placeholder="Typ je vraag…"
+            placeholder="Stel een vraag over je project, intake of facturatie…"
             rows={2}
             className="flex-1 resize-none rounded-[16px] border border-black/[0.08] bg-[#FAFAFA] px-4 py-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#7547F8]/30"
           />

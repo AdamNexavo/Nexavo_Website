@@ -135,4 +135,13 @@ export function createAssistantMessage(content: string): ChatMessage {
 export const WELCOME_MESSAGE =
   "Hoi! Goed dat je er bent. Waar kan ik je mee helpen? Wil je meer weten over pakketten, onderhoud, automatiseringen, of welk pakket het beste bij jouw bedrijf past?";
 
+export const PORTAL_WELCOME_MESSAGE =
+  "Hoi! Ik help je met vragen over je project, intake, facturatie en het klantportaal. Voor wijzigingen aan je website raden we aan een supportticket te openen — dan pakken we het persoonlijk op.";
+
+export const PORTAL_SUGGESTED_QUESTIONS = [
+  "Hoe dien ik een wijziging in?",
+  "Waar vind ik mijn facturen?",
+  "Wat is de status van mijn website?",
+];
+
 export { checkAiAvailability };

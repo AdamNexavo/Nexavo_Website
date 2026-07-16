@@ -9,6 +9,7 @@ import { usePortalAuth } from "@/context/PortalAuthContext";
 import { upsertClient, generateId, generateTicketNumber } from "@/lib/portal/storage";
 import type { SupportTicket } from "@/lib/portal/types";
 import { TICKET_STATUSES, TICKET_STATUS_VARIANT } from "@/lib/portal/constants";
+import { MailboxRow, ReferencePanelCard, MailboxLayout } from "@/components/portal/MailboxUI";
 import {
   ReferenceCard,
   ReferencePageTitle,
@@ -197,7 +198,7 @@ export default function PortalTicketsPage() {
             />
           </div>
 
-          <div className="rounded-[12px] border border-[#E2E0DB] bg-[#FAFAF8]">
+          <div className="rounded-[12px] border border-[#E2E0DB] bg-[#FAFAF8] shadow-block">
             <button
               type="button"
               onClick={() => setShowRevision((v) => !v)}
@@ -235,111 +236,105 @@ export default function PortalTicketsPage() {
         </ReferenceCard>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-5">
-        <ReferenceCard className="flex flex-col lg:col-span-2 !p-0 overflow-hidden">
-          <div className="border-b border-[#E2E0DB] px-4 py-3">
-            <h3 className="text-[14px] font-semibold text-[#111111]">Ingediende tickets</h3>
-            <p className="text-[12px] text-[#9CA3AF]">{client.tickets.length} ticket(s)</p>
-          </div>
-          <div className="max-h-[520px] overflow-y-auto [scrollbar-width:thin]">
-            {client.tickets.length === 0 ? (
-              <div className="p-4">
-                <p className="text-[14px] text-[#6B7280]">Nog geen tickets. Klik op &apos;Nieuw ticket&apos; om te starten.</p>
-              </div>
-            ) : (
-              client.tickets.map((ticket) => (
-                <button
-                  key={ticket.id}
-                  type="button"
-                  onClick={() => setSelectedId(ticket.id)}
-                  className={cn(
-                    "w-full border-b border-[#E5E5E5] p-4 text-left transition-colors last:border-0",
-                    selectedId === ticket.id
-                      ? "bg-[#EDE9FE]/25"
-                      : "hover:bg-[#EAEAEA]/60",
-                  )}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono text-[11px] text-[#9CA3AF]">{ticket.number}</span>
-                    <ReferenceBadge variant={statusVariant[ticket.status] ?? "default"}>
-                      {TICKET_STATUSES[ticket.status]}
-                    </ReferenceBadge>
-                  </div>
-                  <p className="mt-1 text-[14px] font-medium text-[#111111]">{ticket.subject}</p>
-                  <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[12px] text-[#9CA3AF]">
-                    <span>{ticket.category}</span>
-                    <span>·</span>
-                    <span>
-                      {new Date(ticket.createdAt).toLocaleDateString("nl-NL", {
+      <ReferencePanelCard
+        title="Ingediende tickets"
+        subtitle={`${client.tickets.length} ticket(s) — klik een regel om het gesprek te openen`}
+      >
+        {client.tickets.length === 0 ? (
+          <p className="bg-white px-5 py-10 text-center text-[14px] text-[#6B7280]">
+            Nog geen tickets. Klik op &apos;Nieuw ticket&apos; om te starten.
+          </p>
+        ) : (
+          <MailboxLayout
+            list={
+              <>
+                {client.tickets.map((ticket) => {
+                  const lastMsg = ticket.messages[ticket.messages.length - 1];
+                  return (
+                    <MailboxRow
+                      key={ticket.id}
+                      selected={selectedId === ticket.id}
+                      unread={ticket.status === "submitted"}
+                      onClick={() => setSelectedId(ticket.id)}
+                      title={
+                        <span>
+                          <span className="font-mono text-[11px] text-[#9CA3AF]">{ticket.number}</span>
+                          {" — "}
+                          {ticket.subject}
+                        </span>
+                      }
+                      meta={ticket.category}
+                      preview={lastMsg?.body}
+                      date={new Date(ticket.updatedAt).toLocaleDateString("nl-NL", {
                         day: "numeric",
                         month: "short",
-                        year: "numeric",
                       })}
-                    </span>
+                      status={TICKET_STATUSES[ticket.status]}
+                      statusVariant={statusVariant[ticket.status] ?? "default"}
+                    />
+                  );
+                })}
+              </>
+            }
+            detail={
+              selected ? (
+                <div className="p-5">
+                  <div className="mb-4 flex items-start justify-between gap-3 border-b border-[#E2E0DB] pb-4">
+                    <div>
+                      <p className="font-mono text-[12px] text-[#9CA3AF]">{selected.number}</p>
+                      <h3 className="text-lg font-semibold">{selected.subject}</h3>
+                      <p className="text-[13px] text-[#6B7280]">
+                        {selected.category} · ingediend op{" "}
+                        {new Date(selected.createdAt).toLocaleDateString("nl-NL", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                    <ReferenceBadge variant={statusVariant[selected.status] ?? "default"}>
+                      {TICKET_STATUSES[selected.status]}
+                    </ReferenceBadge>
                   </div>
-                </button>
-              ))
-            )}
-          </div>
-        </ReferenceCard>
-
-        <ReferenceCard className="lg:col-span-3">
-          {selected ? (
-            <>
-              <div className="mb-4 flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-mono text-[12px] text-[#9CA3AF]">{selected.number}</p>
-                  <h3 className="text-lg font-semibold">{selected.subject}</h3>
-                  <p className="text-[13px] text-[#6B7280]">
-                    {selected.category} · ingediend op{" "}
-                    {new Date(selected.createdAt).toLocaleDateString("nl-NL", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </p>
-                </div>
-                <ReferenceBadge variant={statusVariant[selected.status] ?? "default"}>
-                  {TICKET_STATUSES[selected.status]}
-                </ReferenceBadge>
-              </div>
-              <div className="mb-6 max-h-[360px] space-y-3 overflow-y-auto">
-                {selected.messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={cn(
-                      "rounded-[14px] p-4 text-[14px]",
-                      msg.author === "client" ? "bg-[#EDE9FE]/40" : "bg-[#FAFAF8]",
-                    )}
-                  >
-                    <p className="mb-1 text-[12px] font-medium text-[#6B7280]">{msg.authorName}</p>
-                    <p className="whitespace-pre-wrap">{msg.body}</p>
-                    <p className="mt-2 text-[11px] text-[#9CA3AF]">
-                      {new Date(msg.createdAt).toLocaleString("nl-NL")}
-                    </p>
+                  <div className="mb-6 max-h-[360px] space-y-3 overflow-y-auto">
+                    {selected.messages.map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={cn(
+                          "rounded-[14px] p-4 text-[14px]",
+                          msg.author === "client" ? "bg-[#EDE9FE]/40" : "bg-[#FAFAF8]",
+                        )}
+                      >
+                        <p className="mb-1 text-[12px] font-medium text-[#6B7280]">{msg.authorName}</p>
+                        <p className="whitespace-pre-wrap">{msg.body}</p>
+                        <p className="mt-2 text-[11px] text-[#9CA3AF]">
+                          {new Date(msg.createdAt).toLocaleString("nl-NL")}
+                        </p>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              {selected.status !== "done" && (
-                <div className="border-t border-[#E2E0DB] pt-4">
-                  <Textarea
-                    value={reply}
-                    onChange={(e) => setReply(e.target.value)}
-                    placeholder="Typ een bericht..."
-                    className="mb-3 min-h-[80px] rounded-[12px]"
-                  />
-                  <Button variant="default" onClick={sendReply} disabled={!reply.trim()}>
-                    <Send className="mr-2 h-4 w-4" />
-                    Versturen
-                  </Button>
+                  {selected.status !== "done" && (
+                    <div className="border-t border-[#E2E0DB] pt-4">
+                      <Textarea
+                        value={reply}
+                        onChange={(e) => setReply(e.target.value)}
+                        placeholder="Typ een bericht..."
+                        className="mb-3 min-h-[80px] rounded-[12px]"
+                      />
+                      <Button variant="default" onClick={sendReply} disabled={!reply.trim()}>
+                        <Send className="mr-2 h-4 w-4" />
+                        Versturen
+                      </Button>
+                    </div>
+                  )}
                 </div>
-              )}
-            </>
-          ) : (
-            <p className="text-[14px] text-[#6B7280]">Selecteer een ticket om het gesprek te bekijken.</p>
-          )}
-        </ReferenceCard>
-      </div>
+              ) : (
+                <p className="p-8 text-center text-[14px] text-[#6B7280]">Selecteer een ticket om het gesprek te bekijken.</p>
+              )
+            }
+          />
+        )}
+      </ReferencePanelCard>
 
       <p className="mt-4 text-[12px] text-[#9CA3AF]">
         Algemene vragen? Bekijk ook{" "}

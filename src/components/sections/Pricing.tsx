@@ -85,7 +85,7 @@ export const Pricing = () => {
               className={`relative rounded-lg p-8 ${
                 pkg.highlighted
                   ? "bg-foreground text-white border-2 border-foreground"
-                  : "bg-white border border-border"
+                  : "bg-white border border-border shadow-card"
               }`}
             >
               {pkg.highlighted && (

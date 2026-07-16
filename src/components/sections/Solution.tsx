@@ -80,17 +80,17 @@ export const Solution = () => {
                   
                   {/* Cards skeleton */}
                   <div className="flex gap-3">
-                    <div className="flex-1 rounded-xl border border-[#ebe8e4] bg-[#fafaf9] p-3">
+                    <div className="flex-1 rounded-xl border border-[#ebe8e4] bg-[#fafaf9] shadow-block p-3">
                       <div className="mb-2 h-8 w-8 rounded-lg bg-primary/20" />
                       <div className="mb-1 h-2 w-16 rounded bg-[#eceae6]" />
                       <div className="h-1.5 w-full rounded bg-[#eceae6]" />
                     </div>
-                    <div className="flex-1 rounded-xl border border-[#ebe8e4] bg-[#fafaf9] p-3">
+                    <div className="flex-1 rounded-xl border border-[#ebe8e4] bg-[#fafaf9] shadow-block p-3">
                       <div className="mb-2 h-8 w-8 rounded-lg bg-brand-orange/20" />
                       <div className="mb-1 h-2 w-16 rounded bg-[#eceae6]" />
                       <div className="h-1.5 w-full rounded bg-[#eceae6]" />
                     </div>
-                    <div className="flex-1 rounded-xl border border-[#ebe8e4] bg-[#fafaf9] p-3">
+                    <div className="flex-1 rounded-xl border border-[#ebe8e4] bg-[#fafaf9] shadow-block p-3">
                       <div className="mb-2 h-8 w-8 rounded-lg bg-primary/20" />
                       <div className="mb-1 h-2 w-16 rounded bg-[#eceae6]" />
                       <div className="h-1.5 w-full rounded bg-[#eceae6]" />

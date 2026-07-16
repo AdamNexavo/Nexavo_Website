@@ -1,14 +1,20 @@
-import { Pencil, FileText, ExternalLink } from "lucide-react";
+import { Pencil, FileText, ExternalLink, Lock, Mail } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useState } from "react";
 import { usePortalAuth } from "@/context/PortalAuthContext";
 import { upsertClient } from "@/lib/portal/storage";
-import { getClientReferenceNumber } from "@/lib/portal/helpers";
+import {
+  getClientReferenceNumber,
+  isPackageChangeLocked,
+  hasPendingPackage,
+  formatMonthlyPriceDisplay,
+} from "@/lib/portal/helpers";
 import { getPlanById, getMaintenanceById } from "@/lib/portal/constants";
-import { isPackageChangeLocked } from "@/lib/portal/helpers";
 import {
   ReferenceCard,
   ReferencePageTitle,
   ReferenceTabs,
+  ReferenceWhiteCard,
   refInputClass,
   refLabelClass,
 } from "@/components/portal/reference/ReferenceUI";
@@ -19,27 +25,51 @@ import { getClientVisibleDocuments } from "@/lib/portal/client-documents";
 
 const TABS = [
   { id: "gegevens", label: "Gegevens" },
-  { id: "inloggen", label: "Inloggen" },
-  { id: "pakket", label: "Pakket & facturatie" },
   { id: "documenten", label: "Documenten" },
+  { id: "pakket", label: "Pakket & facturatie" },
 ];
 
 export default function PortalProfielPage() {
   const { client, refreshClient } = usePortalAuth();
   const { toast } = useToast();
   const [tab, setTab] = useState("gegevens");
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [profileDraft, setProfileDraft] = useState({
+    firstName: "",
+    lastName: "",
+    phone: "",
+  });
 
   if (!client) return null;
 
-  const updateUser = (field: "firstName" | "lastName" | "phone", value: string) => {
-    upsertClient({ ...client, user: { ...client.user, [field]: value } });
+  const startEditingProfile = () => {
+    setProfileDraft({
+      firstName: client.user.firstName,
+      lastName: client.user.lastName,
+      phone: client.user.phone ?? "",
+    });
+    setEditingProfile(true);
+  };
+
+  const saveProfile = () => {
+    upsertClient({
+      ...client,
+      user: {
+        ...client.user,
+        firstName: profileDraft.firstName,
+        lastName: profileDraft.lastName,
+        phone: profileDraft.phone,
+      },
+    });
     refreshClient();
+    setEditingProfile(false);
+    toast({ title: "Profiel opgeslagen" });
   };
 
   const initials = client.user.firstName?.[0]?.toUpperCase() ?? "J";
   const clientRef = getClientReferenceNumber(client);
-  const plan = getPlanById(client.package.planId);
-  const maintenance = getMaintenanceById(client.package.maintenanceId ?? "plus");
+  const packageLocked = isPackageChangeLocked(client);
+  const canChangeInIntake = !packageLocked && !client.onboarding.completed;
 
   return (
     <div>
@@ -79,97 +109,189 @@ export default function PortalProfielPage() {
             </div>
           </ReferenceCard>
 
-          <ReferenceCard className="space-y-4">
-            <h3 className="font-semibold">Gegevens wijzigen</h3>
-            <div>
-              <label className={refLabelClass}>Voornaam</label>
-              <Input value={client.user.firstName} onChange={(e) => updateUser("firstName", e.target.value)} className={refInputClass} />
-            </div>
-            <div>
-              <label className={refLabelClass}>Achternaam</label>
-              <Input value={client.user.lastName} onChange={(e) => updateUser("lastName", e.target.value)} className={refInputClass} />
-            </div>
-            <div>
-              <label className={refLabelClass}>Telefoon</label>
-              <Input value={client.user.phone ?? ""} onChange={(e) => updateUser("phone", e.target.value)} className={refInputClass} />
-            </div>
-            <Button variant="brand" onClick={() => toast({ title: "Profiel opgeslagen" })} className="w-full">
-              Opslaan
-            </Button>
-          </ReferenceCard>
-        </div>
-      )}
-
-      {tab === "inloggen" && (
-        <div className="grid gap-5 lg:grid-cols-2">
-          <ReferenceCard>
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-semibold">Inloggen</h3>
-              <Button variant="ghost" size="sm" className="rounded-full text-[#7547F8]">
-                <Pencil className="mr-1 h-3.5 w-3.5" />Wijzig
-              </Button>
-            </div>
-            <div className="space-y-4 text-[14px]">
-              <div>
-                <p className="text-[12px] text-[#9CA3AF]">Wachtwoord</p>
-                <p className="font-medium tracking-widest">••••••••••••</p>
-              </div>
-              <div>
-                <p className="mb-2 text-[12px] text-[#9CA3AF]">Tweestapsverificatie</p>
-                <Button variant="outline" className="rounded-full border-[#E2E0DB]">
-                  Tweestapsverificatie inschakelen
+          <div className="flex flex-col gap-5">
+            <ReferenceCard className="space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="font-semibold">Gegevens wijzigen</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-full text-[#7547F8]"
+                  onClick={() => (editingProfile ? setEditingProfile(false) : startEditingProfile())}
+                >
+                  <Pencil className="mr-1 h-3.5 w-3.5" />
+                  {editingProfile ? "Sluiten" : "Wijzig"}
                 </Button>
               </div>
-            </div>
-          </ReferenceCard>
+              {editingProfile ? (
+                <>
+                  <div>
+                    <label className={refLabelClass}>Voornaam</label>
+                    <Input
+                      value={profileDraft.firstName}
+                      onChange={(e) => setProfileDraft((draft) => ({ ...draft, firstName: e.target.value }))}
+                      className={refInputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className={refLabelClass}>Achternaam</label>
+                    <Input
+                      value={profileDraft.lastName}
+                      onChange={(e) => setProfileDraft((draft) => ({ ...draft, lastName: e.target.value }))}
+                      className={refInputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className={refLabelClass}>Telefoon</label>
+                    <Input
+                      value={profileDraft.phone}
+                      onChange={(e) => setProfileDraft((draft) => ({ ...draft, phone: e.target.value }))}
+                      className={refInputClass}
+                    />
+                  </div>
+                  <Button variant="brand" onClick={saveProfile} className="w-full">
+                    Opslaan
+                  </Button>
+                </>
+              ) : (
+                <div className="space-y-4 text-[14px]">
+                  <div>
+                    <p className="text-[12px] text-[#9CA3AF]">Voornaam</p>
+                    <p className="font-medium">{client.user.firstName || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-[12px] text-[#9CA3AF]">Achternaam</p>
+                    <p className="font-medium">{client.user.lastName || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-[12px] text-[#9CA3AF]">Telefoon</p>
+                    <p className="font-medium">{client.user.phone || "—"}</p>
+                  </div>
+                </div>
+              )}
+            </ReferenceCard>
+
+            <ReferenceCard>
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="font-semibold">Inloggen</h3>
+                <Button variant="ghost" size="sm" className="rounded-full text-[#7547F8]">
+                  <Pencil className="mr-1 h-3.5 w-3.5" />Wijzig
+                </Button>
+              </div>
+              <div className="space-y-4 text-[14px]">
+                <div>
+                  <p className="text-[12px] text-[#9CA3AF]">Wachtwoord</p>
+                  <p className="font-medium tracking-widest">••••••••••••</p>
+                </div>
+                <div>
+                  <p className="mb-2 text-[12px] text-[#9CA3AF]">Tweestapsverificatie</p>
+                  <Button variant="outline" className="rounded-full border-[#E2E0DB]">
+                    Tweestapsverificatie inschakelen
+                  </Button>
+                </div>
+              </div>
+            </ReferenceCard>
+          </div>
         </div>
       )}
 
       {tab === "pakket" && (
-        <ReferenceCard className="space-y-4">
-          <div>
-            <p className="text-[12px] text-[#9CA3AF]">Huidig pakket</p>
-            <p className="text-[18px] font-semibold text-[#111111]">{plan?.name ?? client.package.planName}</p>
-            <p className="text-[14px] text-[#7547F8]">{plan?.price ?? client.package.planPrice}</p>
-          </div>
-          {maintenance && (
+        <ReferenceWhiteCard className="!p-0 overflow-hidden">
+          <div className="flex items-start justify-between gap-3 border-b border-[#E2E0DB] bg-[#F5F5F5] px-5 py-4">
             <div>
-              <p className="text-[12px] text-[#9CA3AF]">Onderhoud</p>
-              <p className="font-medium">{maintenance.name} · {maintenance.price} {maintenance.priceNote}</p>
+              <h2 className="text-[15px] font-semibold text-[#111111]">Je websitepakket</h2>
+              <p className="text-[13px] text-[#6B7280]">Overzicht van je gekozen pakket en onderhoud.</p>
             </div>
-          )}
-          <p className="text-[13px] text-[#6B7280]">
-            {isPackageChangeLocked(client) ? (
-              <>
-                Je pakket is definitief. Wijzigingen?{" "}
-                <a href="/portal/tickets" className="font-medium text-[#7547F8] hover:underline">
-                  Neem contact op via een ticket
-                </a>
-                .
-              </>
-            ) : !client.onboarding.completed ? (
-              <>
-                Wijzig je pakket via{" "}
-                <a href="/portal/stap/pakket" className="font-medium text-[#7547F8] hover:underline">
-                  stap 5 — Pakket kiezen
-                </a>
-                . Facturen op{" "}
-                <a href="/portal/facturatie" className="font-medium text-[#7547F8] hover:underline">
-                  facturatie & betaling
-                </a>
-                .
-              </>
+            {canChangeInIntake && (
+              <Button asChild variant="ghost" size="sm" className="shrink-0 rounded-full text-[#7547F8]">
+                <Link to="/portal/stap/pakket">
+                  <Pencil className="mr-1 h-3.5 w-3.5" />
+                  Wijzig in intake
+                </Link>
+              </Button>
+            )}
+          </div>
+
+          <div className="bg-white p-5">
+            {packageLocked && (
+              <div className="mb-4 flex gap-3 rounded-[10px] border border-[#E2E0DB] bg-[#FAFAF8] shadow-block px-3 py-3">
+                <Lock className="mt-0.5 h-4 w-4 shrink-0 text-[#6B7280]" />
+                <div>
+                  <p className="text-[13px] font-medium text-[#111111]">Pakket is definitief</p>
+                  <p className="mt-1 text-[12px] leading-relaxed text-[#6B7280]">
+                    Wijzigingen? Neem contact op via een ticket — wij regelen dit persoonlijk met je.
+                  </p>
+                  <Button asChild variant="outline" size="sm" className="mt-2 rounded-full">
+                    <Link to="/portal/tickets">
+                      <Mail className="mr-2 h-3.5 w-3.5" />
+                      Contact opnemen
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {hasPendingPackage(client) ? (
+              <div className="py-6 text-center">
+                <p className="font-medium text-[#111111]">Nog geen pakket gekozen</p>
+                <p className="mt-1 text-[13px] text-[#6B7280]">Kies je pakket in stap 5 van je intake.</p>
+                <Button asChild variant="brand" className="mt-4 rounded-full">
+                  <Link to="/portal/stap/pakket">Naar pakket kiezen</Link>
+                </Button>
+              </div>
             ) : (
               <>
-                Bekijk je pakket op{" "}
-                <a href="/portal/facturatie?tab=pakket" className="font-medium text-[#7547F8] hover:underline">
-                  facturatie → Websitepakket
-                </a>
-                .
+                <div className="grid gap-3 text-[13px] sm:grid-cols-2 lg:grid-cols-3">
+                  <div>
+                    <p className="text-[11px] text-[#9CA3AF]">Websitepakket</p>
+                    <p className="font-medium">{client.package.planName}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-[#9CA3AF]">Eenmalig bedrag</p>
+                    <p className="font-medium">{client.package.planPrice ?? getPlanById(client.package.planId)?.price ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-[#9CA3AF]">Onderhoud</p>
+                    <p className="font-medium">{client.package.maintenanceName ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-[#9CA3AF]">Maandelijks onderhoud</p>
+                    <p className="font-medium">
+                      {formatMonthlyPriceDisplay(
+                        client.package.monthlyPrice ??
+                          getMaintenanceById(client.package.maintenanceId ?? "plus")?.price,
+                      )}
+                    </p>
+                  </div>
+                  <div className="sm:col-span-2 lg:col-span-2">
+                    <p className="text-[11px] text-[#9CA3AF]">Omschrijving</p>
+                    <p className="font-medium text-[#374151]">
+                      {getPlanById(client.package.planId)?.description ?? "—"}
+                    </p>
+                  </div>
+                </div>
+                {client.package.maintenanceIncluded && client.package.maintenanceIncluded.length > 0 && (
+                  <div className="mt-4 border-t border-[#E2E0DB] pt-3">
+                    <p className="text-[11px] text-[#9CA3AF]">Inbegrepen in onderhoud</p>
+                    <ul className="mt-2 space-y-1 text-[13px] text-[#374151]">
+                      {client.package.maintenanceIncluded.map((item) => (
+                        <li key={item}>· {item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </>
             )}
-          </p>
-        </ReferenceCard>
+            <p className="mt-4 border-t border-[#E2E0DB] pt-3 text-[13px] text-[#6B7280]">
+              Facturen en betalingen vind je op{" "}
+              <Link to="/portal/facturatie" className="font-medium text-[#7547F8] hover:underline">
+                facturatie & betaling
+              </Link>
+              .
+            </p>
+            <p className="mt-2 text-[12px] text-[#9CA3AF]">Alle bedragen exclusief btw</p>
+          </div>
+        </ReferenceWhiteCard>
       )}
 
       {tab === "documenten" && (

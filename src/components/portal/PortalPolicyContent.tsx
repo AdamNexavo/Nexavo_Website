@@ -47,7 +47,7 @@ export function MaintenancePolicyContent({ compact }: { compact?: boolean }) {
           <div
             key={pkg.id}
             className={cn(
-              "rounded-[14px] border p-4",
+              "rounded-[14px] border p-4 shadow-block",
               pkg.recommended ? "border-[#7547F8]/30 bg-[#EDE9FE]/20" : "border-[#E2E0DB] bg-[#FAFAF8]",
             )}
           >
@@ -110,7 +110,7 @@ export function UpsellPricingContent({ compact }: { compact?: boolean }) {
         Onderstaande richtprijzen zijn indicatief. Offertes kunnen afwijken op basis van scope en complexiteit.
       </p>
       {UPSELL_CATEGORIES.map((cat) => (
-        <div key={cat.id} className="rounded-[14px] border border-[#E2E0DB] overflow-hidden">
+        <div key={cat.id} className="rounded-[14px] border border-[#E2E0DB] overflow-hidden shadow-block">
           <button
             type="button"
             onClick={() => setOpenId((o) => (o === cat.id ? null : cat.id))}

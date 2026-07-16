@@ -1,19 +1,29 @@
 import type { ClientAccount, ClientInvite, PortalSession } from "./types";
 import { migrateClient } from "./types";
 import { migratePaymentRecord } from "./invoices";
+import { isSupabasePortalEnabled } from "./supabase-client";
+import {
+  deleteClientFromSupabase,
+  fetchAllClientsFromSupabase,
+  fetchAllInvitesFromSupabase,
+  subscribeToPortalClients,
+  upsertClientToSupabase,
+  upsertInviteToSupabase,
+} from "./supabase-sync";
 
 /**
- * DEMO / MVP STORAGE — NOT PRODUCTION READY
- *
- * All portal data lives in browser localStorage. Client-side password hashing and
- * session tokens are suitable for demos only. Production requires Supabase Auth,
- * a PostgreSQL database, and secure file storage for uploads.
+ * Portal storage — localStorage (demo) of Supabase PostgreSQL (productie).
  */
 const KEYS = {
   clients: "nexavo_portal_clients",
   invites: "nexavo_portal_invites",
   session: "nexavo_portal_session",
 } as const;
+
+let supabaseClientsCache: ClientAccount[] | null = null;
+let supabaseInvitesCache: ClientInvite[] | null = null;
+let storageInitPromise: Promise<void> | null = null;
+let unsubscribeRealtime: (() => void) | null = null;
 
 function readJson<T>(key: string, fallback: T): T {
   try {
@@ -29,8 +39,8 @@ function writeJson<T>(key: string, value: T): void {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
-export function getClients(): ClientAccount[] {
-  return readJson<ClientAccount[]>(KEYS.clients, []).map((c) => {
+function migrateStoredClients(clients: ClientAccount[]): ClientAccount[] {
+  return clients.map((c) => {
     const migrated = migrateClient(c);
     return {
       ...migrated,
@@ -39,7 +49,50 @@ export function getClients(): ClientAccount[] {
   });
 }
 
+export function isRemotePortalStorage(): boolean {
+  return isSupabasePortalEnabled();
+}
+
+export async function initPortalStorage(): Promise<void> {
+  if (!isSupabasePortalEnabled()) return;
+  if (storageInitPromise) return storageInitPromise;
+
+  storageInitPromise = (async () => {
+    supabaseClientsCache = await fetchAllClientsFromSupabase();
+    supabaseInvitesCache = await fetchAllInvitesFromSupabase();
+
+    unsubscribeRealtime?.();
+    unsubscribeRealtime = subscribeToPortalClients(() => {
+      void reloadSupabaseCache();
+    });
+  })();
+
+  return storageInitPromise;
+}
+
+async function reloadSupabaseCache(): Promise<void> {
+  if (!isSupabasePortalEnabled()) return;
+  supabaseClientsCache = await fetchAllClientsFromSupabase();
+  supabaseInvitesCache = await fetchAllInvitesFromSupabase();
+}
+
+export async function refreshPortalStorage(): Promise<void> {
+  if (!isSupabasePortalEnabled()) return;
+  await reloadSupabaseCache();
+}
+
+export function getClients(): ClientAccount[] {
+  if (isSupabasePortalEnabled()) {
+    return migrateStoredClients(supabaseClientsCache ?? []);
+  }
+  return migrateStoredClients(readJson<ClientAccount[]>(KEYS.clients, []));
+}
+
 export function saveClients(clients: ClientAccount[]): void {
+  if (isSupabasePortalEnabled()) {
+    supabaseClientsCache = migrateStoredClients(clients);
+    return;
+  }
   writeJson(KEYS.clients, clients);
 }
 
@@ -57,18 +110,37 @@ export function upsertClient(client: ClientAccount): ClientAccount {
   if (index >= 0) clients[index] = client;
   else clients.push(client);
   saveClients(clients);
+
+  if (isSupabasePortalEnabled()) {
+    void upsertClientToSupabase(client).catch((error) => {
+      console.error("Kon klant niet synchroniseren met Supabase:", error);
+    });
+  }
+
   return client;
 }
 
 export function deleteClient(id: string): void {
   saveClients(getClients().filter((c) => c.id !== id));
+  if (isSupabasePortalEnabled()) {
+    void deleteClientFromSupabase(id).catch((error) => {
+      console.error("Kon klant niet verwijderen uit Supabase:", error);
+    });
+  }
 }
 
 export function getInvites(): ClientInvite[] {
+  if (isSupabasePortalEnabled()) {
+    return supabaseInvitesCache ?? [];
+  }
   return readJson<ClientInvite[]>(KEYS.invites, []);
 }
 
 export function saveInvites(invites: ClientInvite[]): void {
+  if (isSupabasePortalEnabled()) {
+    supabaseInvitesCache = invites;
+    return;
+  }
   writeJson(KEYS.invites, invites);
 }
 
@@ -82,6 +154,13 @@ export function upsertInvite(invite: ClientInvite): ClientInvite {
   if (index >= 0) invites[index] = invite;
   else invites.push(invite);
   saveInvites(invites);
+
+  if (isSupabasePortalEnabled()) {
+    void upsertInviteToSupabase(invite).catch((error) => {
+      console.error("Kon uitnodiging niet synchroniseren met Supabase:", error);
+    });
+  }
+
   return invite;
 }
 

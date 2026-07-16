@@ -60,7 +60,7 @@ export const Process = () => {
       );
     }
 
-    return cn(base, "border-border/50", hover, "hover:border-border");
+    return cn(base, "border-border/50 shadow-card", hover, "hover:border-border");
   };
 
   return (

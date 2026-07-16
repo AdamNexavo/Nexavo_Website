@@ -14,6 +14,9 @@ type PortalIntegrationAppCardProps = {
   compact?: boolean;
   status: IntegrationStatus;
   onConnect?: () => void;
+  /** white = witte kaart binnen grijze sectie */
+  surface?: "default" | "white";
+  requestedAt?: string;
 };
 
 export function PortalIntegrationAppCard({
@@ -21,15 +24,19 @@ export function PortalIntegrationAppCard({
   compact = false,
   status,
   onConnect,
+  surface = "default",
+  requestedAt,
 }: PortalIntegrationAppCardProps) {
   const active = status === "active";
 
   return (
     <div
       className={cn(
-        integrationCardClass,
+        surface === "white"
+          ? "group relative flex flex-col items-start rounded-[14px] border border-[#E2E0DB] bg-white p-4 text-left shadow-[0_1px_3px_rgba(15,23,42,0.06)] transition-colors hover:border-[#D8D6D1]"
+          : integrationCardClass,
         "relative items-start text-left",
-        compact ? "p-4" : "p-5",
+        surface === "default" && (compact ? "p-4" : "p-5"),
       )}
     >
       <Link to={`/portal/koppelingen/${integration.slug}`} className="flex flex-1 flex-col">
@@ -51,11 +58,18 @@ export function PortalIntegrationAppCard({
           {integration.cardDescription}
         </p>
       </Link>
-      <div className="mt-4 flex items-center gap-2">
+      <div className="mt-4 flex flex-wrap items-center gap-2">
         {active ? (
           <ReferenceBadge variant="green">Actief</ReferenceBadge>
         ) : status === "requested" || status === "in_progress" ? (
-          <ReferenceBadge variant="purple">{INTEGRATION_STATUS_LABELS[status]}</ReferenceBadge>
+          <>
+            <ReferenceBadge variant="purple">{INTEGRATION_STATUS_LABELS[status]}</ReferenceBadge>
+            {requestedAt && (
+              <span className="text-[11px] text-[#9CA3AF]">
+                Aangevraagd {new Date(requestedAt).toLocaleDateString("nl-NL")}
+              </span>
+            )}
+          </>
         ) : (
           <Button
             type="button"

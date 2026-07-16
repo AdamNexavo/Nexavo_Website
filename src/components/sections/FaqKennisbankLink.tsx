@@ -15,8 +15,8 @@ export const FaqKennisbankLink = ({ className, purple = false }: FaqKennisbankLi
     size="lg"
     className={cn(
       purple
-        ? "group px-4 shadow-none"
-        : "group border-border/60 bg-white px-4 text-foreground shadow-none hover:border-border hover:bg-white",
+        ? "group px-4 shadow-card"
+        : "group border-border/60 bg-white px-4 text-foreground shadow-card hover:border-border hover:bg-white",
       className,
     )}
   >

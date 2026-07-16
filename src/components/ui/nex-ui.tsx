@@ -294,7 +294,7 @@ const pricingCardShellClass = (highlighted: boolean) =>
     "relative z-0 flex flex-col rounded-2xl p-7 md:p-8 border transition-[box-shadow,border-color] duration-300 h-full hover:z-20",
     highlighted
       ? "nex-pricing-highlight hover:shadow-[0_28px_56px_-22px_hsl(255_80%_60%_/_0.38)]"
-      : "bg-[#f5f5f7] border-border shadow-card hover:border-border/80 hover:shadow-[0_22px_50px_-22px_rgba(15,23,42,0.16)]",
+      : "bg-[#f5f5f7] border-border shadow-card hover:border-border/80 hover:shadow-hover",
   );
 
 const maintenanceCardShellClass = (highlighted: boolean) =>
@@ -302,7 +302,7 @@ const maintenanceCardShellClass = (highlighted: boolean) =>
     "relative z-0 flex flex-col rounded-2xl p-7 md:p-8 border transition-[box-shadow,border-color] duration-300 h-full hover:z-20",
     highlighted
       ? "nex-pricing-highlight bg-white hover:shadow-[0_28px_56px_-22px_hsl(255_80%_60%_/_0.38)]"
-      : "bg-white border-border shadow-card hover:border-border/80 hover:shadow-[0_22px_50px_-22px_rgba(15,23,42,0.16)]",
+      : "bg-white border-border shadow-card hover:border-border/80 hover:shadow-hover",
   );
 
 const pricingHighlightBadgeClass =
@@ -496,6 +496,7 @@ export const MaintenanceCard = ({
       </h3>
       <p className="font-sans text-3xl md:text-4xl font-bold tracking-tight text-foreground">
         {price}
+        <span className="ml-1 text-lg md:text-xl font-semibold text-muted-foreground">p.m.</span>
       </p>
       <p className="text-xs text-muted-foreground mt-1 mb-4">{priceNote}</p>
       <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>

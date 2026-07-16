@@ -1,5 +1,6 @@
 import { MaintenanceCard, PricingCard } from "@/components/ui/nex-ui";
 import { getPlanById, getMaintenanceById } from "@/lib/portal/constants";
+import { formatMonthlyPriceDisplay } from "@/lib/portal/helpers";
 
 export function PortalWebsitePackageCard({
   planId,
@@ -13,7 +14,7 @@ export function PortalWebsitePackageCard({
 
   if (compact) {
     return (
-      <div className="rounded-[20px] border border-black/[0.08] bg-[#F5F4F2] p-5">
+      <div className="rounded-[20px] border border-black/[0.08] bg-[#F5F4F2] p-5 shadow-block">
         <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#6B7280]">Websitepakket</p>
         <p className="mt-2 text-xl font-semibold text-[#0B0B0D]">{plan.name}</p>
         <p className="mt-1 text-[14px] text-[#6B7280]">{plan.pricePrefix ? `${plan.pricePrefix} ` : ""}{plan.price} · {plan.priceDetail}</p>
@@ -50,10 +51,10 @@ export function PortalMaintenancePackageCard({
 
   if (compact) {
     return (
-      <div className="rounded-[20px] border border-[#7547F8]/20 bg-[#F5F3FF]/40 p-5">
+      <div className="rounded-[20px] border border-[#7547F8]/20 bg-[#F5F3FF]/40 p-5 shadow-block">
         <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7547F8]">Onderhoud</p>
         <p className="mt-2 text-xl font-semibold text-[#0B0B0D]">{pkg.name}</p>
-        <p className="mt-1 text-[14px] text-[#6B7280]">{pkg.price} {pkg.priceNote}</p>
+        <p className="mt-1 text-[14px] text-[#6B7280]">{formatMonthlyPriceDisplay(pkg.price)} · excl. btw</p>
         <ul className="mt-3 space-y-1">
           {pkg.highlights.map((h) => (
             <li key={h} className="text-[13px] text-[#6B7280]">· {h}</li>

@@ -1,8 +1,39 @@
 import type { ClientAccount, PaymentRecord } from "./types";
 import { generateId } from "./storage";
 import { addPaymentTermDays, getClientReferenceNumber, PAYMENT_TERM_DAYS } from "./helpers";
+import { getPlanById } from "./constants";
+import { parseEuroAmount } from "./billing";
 
 const INVOICE_COUNTER_KEY = "nexavo_invoice_counter";
+const VAT_RATE = 0.21;
+
+export const PACKAGE_INVOICE_DESCRIPTIONS: Record<string, string> = {
+  funnel:
+    "Funnel / One-page website – conversiegerichte landingspagina inclusief basis SEO, contactformulier en webchat-widget.",
+  start:
+    "Startpakket website – complete basiswebsite voor online zichtbaarheid, inclusief maximaal 5 pagina's, basis SEO, contactformulier, webchat-widget en technische oplevering.",
+  groei:
+    "Groei-pakket website – uitgebreide bedrijfswebsite met extra pagina's, SEO-optimalisatie en geavanceerde formulieren.",
+  pro: "Pro-pakket website – professionele website met premium functies, koppelingen en conversie-optimalisatie.",
+  maatwerk: "Maatwerk website – op maat gebouwde oplossing volgens Nexavo intake en projectafspraken.",
+};
+
+function formatEuro(value: number): string {
+  return `€${value.toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+export function enrichPaymentAmounts(payment: PaymentRecord): PaymentRecord {
+  const ex = parseEuroAmount(payment.amountExVat ?? payment.amount);
+  const vat = ex * VAT_RATE;
+  const inc = ex + vat;
+  return {
+    ...payment,
+    amountExVat: payment.amountExVat ?? formatEuro(ex),
+    vatAmount: payment.vatAmount ?? formatEuro(vat),
+    amountIncVat: payment.amountIncVat ?? formatEuro(inc),
+    paymentTermDays: payment.paymentTermDays ?? PAYMENT_TERM_DAYS,
+  };
+}
 
 function readCounter(): { year: number; seq: number } {
   try {
@@ -32,9 +63,18 @@ export function nextInvoiceNumber(): string {
 }
 
 export function getClientPreviewHref(client: ClientAccount): string | null {
+  const preview = client.previewSettings;
+  if (preview?.enabled && preview.url?.trim()) {
+    const raw = preview.url.trim();
+    return raw.startsWith("http") ? raw : `https://${raw.replace(/^\/\//, "")}`;
+  }
   const raw = client.progress.previewUrl ?? client.websiteUrl;
   if (!raw?.trim()) return null;
   return raw.startsWith("http") ? raw : `https://${raw.replace(/^\/\//, "")}`;
+}
+
+export function getPackageInvoiceDescription(planId: string, planName: string): string {
+  return PACKAGE_INVOICE_DESCRIPTIONS[planId] ?? `${planName} — eenmalig websitepakket via Nexavo.`;
 }
 
 function escapeHtml(value: string): string {
@@ -123,19 +163,23 @@ export function createOneTimePackageInvoice(
   client: ClientAccount,
   planName: string,
   amount: string,
+  planId?: string,
 ): PaymentRecord {
   const now = new Date();
-  const record: PaymentRecord = {
+  const description = getPackageInvoiceDescription(planId ?? client.package.planId, planName);
+  const record: PaymentRecord = enrichPaymentAmounts({
     id: generateId(),
     invoiceNumber: nextInvoiceNumber(),
-    description: `${planName} — eenmalig`,
+    description,
+    packageName: planName,
     amount,
     billingType: "one_time",
     status: "open",
     dueDate: addPaymentTermDays(now).toISOString(),
     issuedAt: now.toISOString(),
     createdAt: now.toISOString(),
-  };
+    paymentTermDays: PAYMENT_TERM_DAYS,
+  });
   return attachInvoicePdf(record, client);
 }
 
@@ -168,14 +212,21 @@ export function migratePaymentRecord(payment: PaymentRecord, client: ClientAccou
       ? "recurring"
       : "one_time");
 
-  let migrated: PaymentRecord = {
+  let migrated: PaymentRecord = enrichPaymentAmounts({
     ...payment,
     billingType,
     createdAt: payment.createdAt ?? payment.issuedAt ?? payment.dueDate,
-    status: payment.status === "pending" ? "open" : payment.status,
-  };
+    status:
+      payment.status === "pending"
+        ? "open"
+        : payment.status,
+    packageName:
+      payment.packageName ??
+      client.package.planName ??
+      undefined,
+  });
 
-  if (!migrated.invoiceNumber && migrated.status !== "pending") {
+  if (!migrated.invoiceNumber && migrated.status !== "pending" && migrated.status !== "concept") {
     const year = new Date(migrated.createdAt ?? migrated.dueDate).getFullYear();
     const suffix = migrated.id.replace(/-/g, "").slice(0, 6).toUpperCase();
     migrated = { ...migrated, invoiceNumber: `NX-${year}-LEG${suffix}` };
@@ -183,6 +234,21 @@ export function migratePaymentRecord(payment: PaymentRecord, client: ClientAccou
 
   if (migrated.invoiceNumber && !migrated.issuedAt) {
     migrated = { ...migrated, issuedAt: migrated.createdAt };
+  }
+
+  if (
+    client.package.planId &&
+    migrated.description.includes("— eenmalig") &&
+    !PACKAGE_INVOICE_DESCRIPTIONS[client.package.planId]
+  ) {
+    const plan = getPlanById(client.package.planId);
+    if (plan) {
+      migrated = {
+        ...migrated,
+        description: getPackageInvoiceDescription(plan.id, plan.name),
+        packageName: plan.name,
+      };
+    }
   }
 
   if (migrated.invoiceNumber) {
@@ -197,22 +263,43 @@ export function markInvoicePaid(payment: PaymentRecord, client: ClientAccount): 
     ...attachInvoicePdf(payment, client),
     status: "paid",
     paidAt: new Date().toISOString(),
+    paymentMethod: payment.paymentMethod ?? "iDEAL (demo)",
   };
   return paid;
 }
 
 export const INVOICE_STATUS_LABELS: Record<PaymentRecord["status"], string> = {
   pending: "Gepland",
-  open: "Gefactureerd",
+  open: "Open",
   paid: "Betaald",
-  overdue: "Achterstallig",
+  overdue: "Vervallen",
+  concept: "Concept",
+  processing: "In behandeling",
 };
 
 export function getInvoiceStatusVariant(
   status: PaymentRecord["status"],
-): "default" | "green" | "purple" | "orange" {
+): "default" | "green" | "purple" | "orange" | "red" | "blue" {
   if (status === "paid") return "green";
-  if (status === "overdue") return "orange";
+  if (status === "overdue") return "red";
   if (status === "open") return "purple";
+  if (status === "processing") return "blue";
+  if (status === "concept") return "default";
   return "default";
+}
+
+export function ensureClientDemoPayments(client: ClientAccount): ClientAccount {
+  if (client.payments.length > 0) {
+    return {
+      ...client,
+      payments: client.payments.map((p) => migratePaymentRecord(p, client)),
+    };
+  }
+  if (client.package.pendingSelection || !client.package.planId || client.package.planId === "none") {
+    return client;
+  }
+  const plan = getPlanById(client.package.planId);
+  const amount = plan?.price ?? client.package.planPrice ?? "€0";
+  const invoice = createOneTimePackageInvoice(client, client.package.planName, amount, client.package.planId);
+  return { ...client, payments: [invoice] };
 }

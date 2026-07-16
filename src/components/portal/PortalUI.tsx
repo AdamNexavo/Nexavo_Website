@@ -19,7 +19,7 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
 export function PortalMain({ children }: { children: React.ReactNode }) {
   return (
     <main className="min-w-0 flex-1">
-      <div className="portal-content-area min-h-[calc(100vh-2.5rem)] rounded-[28px] border border-black/[0.08] bg-white/80 p-5 shadow-[0_0_0_1px_rgba(0,0,0,0.03),0_24px_48px_-32px_rgba(15,23,42,0.12)] backdrop-blur-sm md:p-8 lg:p-10">
+      <div className="portal-content-area min-h-[calc(100vh-2.5rem)] rounded-[28px] border border-black/[0.08] bg-white/80 p-5 shadow-card backdrop-blur-sm md:p-8 lg:p-10">
         <div className="mx-auto max-w-[1040px]">{children}</div>
       </div>
     </main>
@@ -40,9 +40,8 @@ export function PortalCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
-        "rounded-[24px] border border-black/[0.08] bg-[#F5F5F5] p-6 md:p-7",
-        "shadow-[0_0_0_1px_rgba(0,0,0,0.03),0_12px_32px_-20px_rgba(15,23,42,0.10)]",
-        hover && "transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-24px_rgba(15,23,42,0.14)]",
+        "rounded-[24px] border border-black/[0.08] bg-[#F5F5F5] p-6 md:p-7 shadow-block",
+        hover && "transition-all duration-300 hover:-translate-y-0.5 hover:shadow-hover",
         className,
       )}
       {...props}
@@ -62,7 +61,7 @@ export function PortalMutedCard({
   return (
     <div
       className={cn(
-        "rounded-[20px] border border-black/[0.06] bg-[#F5F5F5] p-5 md:p-6",
+        "rounded-[20px] border border-black/[0.06] bg-[#F5F5F5] p-5 md:p-6 shadow-block",
         className,
       )}
     >
@@ -77,21 +76,26 @@ export function PortalLabel({
   children,
   className,
   recommended,
+  optional,
 }: {
   children: React.ReactNode;
   className?: string;
   recommended?: boolean;
+  optional?: boolean;
 }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border border-black/[0.08] bg-[#F5F5F5] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#6B7280]",
+        "inline-flex items-center gap-1.5 rounded-full border border-black/[0.08] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#6B7280]",
         className,
       )}
     >
       {children}
       {recommended && (
         <span className="normal-case tracking-normal text-[#7547F8]">· Aanbevelen</span>
+      )}
+      {optional && (
+        <span className="normal-case tracking-normal text-[#9CA3AF]">· (optioneel)</span>
       )}
     </span>
   );
@@ -210,9 +214,15 @@ export function PortalStatCard({
   );
 }
 
-export function PortalProgressBar({ percent }: { percent: number }) {
+export function PortalProgressBar({
+  percent,
+  trackClassName = "bg-[#F5F5F5]",
+}: {
+  percent: number;
+  trackClassName?: string;
+}) {
   return (
-    <div className="h-2.5 w-full overflow-hidden rounded-full bg-[#F5F5F5]">
+    <div className={cn("h-2.5 w-full overflow-hidden rounded-full", trackClassName)}>
       <motion.div
         className="h-full rounded-full bg-[#7547F8]"
         initial={{ width: 0 }}
@@ -504,15 +514,17 @@ export function PortalLockedSection({
   children,
   locked,
   lockMessage = "Beschikbaar na livegang of na aanvraag van deze module",
+  className,
 }: {
   title: string;
   subtitle?: string;
   children: React.ReactNode;
   locked?: boolean;
   lockMessage?: string;
+  className?: string;
 }) {
   return (
-    <PortalCard className="relative overflow-hidden">
+    <PortalCard className={cn("relative overflow-hidden", className)}>
       <div className={cn(locked && "pointer-events-none select-none blur-[1px] opacity-[0.72]")}>
         <div className="mb-4">
           <h3 className="text-[16px] font-semibold text-[#0B0B0D]">{title}</h3>
@@ -665,7 +677,25 @@ export function PortalDashboardTabs({
 /* ─── Pill input styling helper ─── */
 
 export const portalPillInputClass =
-  "rounded-full border-0 bg-[#F5F5F5] px-4 py-2.5 text-[14px] shadow-none focus-visible:ring-[#7547F8]/30";
+  "rounded-[12px] border border-[#E2E0DB] bg-white shadow-block px-4 py-2.5 text-[14px] text-[#111111] shadow-card placeholder:text-[#9CA3AF] focus-visible:border-[#7547F8]/50 focus-visible:ring-2 focus-visible:ring-[#7547F8]/20";
 
 export const portalPillTextareaClass =
-  "rounded-[20px] border-0 bg-[#F5F5F5] px-4 py-3 text-[14px] shadow-none focus-visible:ring-[#7547F8]/30";
+  "rounded-[14px] border border-[#E2E0DB] bg-white px-4 py-3 text-[14px] text-[#111111] shadow-card placeholder:text-[#9CA3AF] focus-visible:border-[#7547F8]/50 focus-visible:ring-2 focus-visible:ring-[#7547F8]/20";
+
+export function portalChoiceChipClass(selected?: boolean) {
+  return cn(
+    "rounded-full border px-3 py-1.5 text-[12px] font-medium transition-colors",
+    selected
+      ? "border-[#7547F8] bg-white text-[#7547F8] shadow-sm"
+      : "border-[#E2E0DB] bg-white text-[#374151] hover:border-[#7547F8]/40",
+  );
+}
+
+export function portalChoiceRowClass(selected?: boolean) {
+  return cn(
+    "flex w-full items-center gap-3 rounded-[14px] border bg-white px-4 py-3 text-left text-[14px] text-[#111111] transition-colors",
+    selected
+      ? "border-[#7547F8]/50 shadow-sm ring-1 ring-[#7547F8]/15"
+      : "border-[#E2E0DB] hover:border-[#7547F8]/30",
+  );
+}

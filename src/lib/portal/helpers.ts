@@ -1,4 +1,4 @@
-import type { ClientAccount, OnboardingData } from "./types";
+import type { ClientAccount, OnboardingData, OnboardingStepId } from "./types";
 import { generateClientNumberFromId } from "./types";
 import { BUILD_PROGRESS_STEPS } from "./constants";
 import {
@@ -7,15 +7,23 @@ import {
   type IntakeStepKey,
   type IntakeStepStatus,
   getIntakeProgressPercent,
+  getIntakeProgressLabel,
+  getIntakeProgress,
   allIntakeStepsComplete,
 } from "./step-validation";
+import { capProjectProgress, getEffectiveProjectProgress, canReachLive } from "./project-progress";
+import { hasOpenIntegrationRequests } from "./applications";
 
 export { allIntakeStepsComplete };
 export type { IntakeStepStatus };
 
-export { getIntakeProgressPercent };
+export { getIntakeProgressPercent, getIntakeProgressLabel, getIntakeProgress };
 
 export const PAYMENT_TERM_DAYS = 14;
+
+export function getClientPaymentTermDays(client: ClientAccount): number {
+  return client.paymentTermDays ?? PAYMENT_TERM_DAYS;
+}
 
 export const PORTAL_TASKS = [
   {
@@ -77,6 +85,44 @@ export function hasInitialPaymentPaid(client: ClientAccount): boolean {
   return client.payments.some((p) => p.status === "paid");
 }
 
+export function isIntakeSubmitted(client: ClientAccount): boolean {
+  return Boolean(client.onboarding.submittedAt);
+}
+
+/** Stap 7 is afgerond na betaling (of na intake bij maatwerk). */
+export function isPaymentIntakeComplete(client: ClientAccount): boolean {
+  if (isMaatwerkPackage(client)) {
+    return client.onboarding.completed === true;
+  }
+  return hasInitialPaymentPaid(client);
+}
+
+export function applyClientPaymentReceived(client: ClientAccount): ClientAccount {
+  if (isMaatwerkPackage(client) || client.onboarding.completed) return client;
+
+  const onboarding: OnboardingData = {
+    ...client.onboarding,
+    completed: true,
+    submittedAt: client.onboarding.submittedAt ?? new Date().toISOString(),
+    completedSteps: [
+      ...new Set([...client.onboarding.completedSteps, "payment" as OnboardingStepId]),
+    ],
+  };
+  const percent = Math.max(client.progress.percent, 35);
+
+  return {
+    ...client,
+    onboarding,
+    progress: {
+      ...client.progress,
+      percent,
+      phase: "Intake ontvangen",
+      steps: getBuildSteps(onboarding, percent),
+      lastUpdate: new Date().toISOString(),
+    },
+  };
+}
+
 export function isPackageChangeLocked(client: ClientAccount): boolean {
   if (client.packageLocked === true) return true;
   return client.onboarding.completed && hasInitialPaymentPaid(client);
@@ -97,9 +143,28 @@ export function hasPendingPackage(client: ClientAccount): boolean {
   return client.package.pendingSelection === true || !client.package.planId || client.package.planId === "none";
 }
 
+export function formatMonthlyPriceDisplay(price: string | undefined | null): string {
+  if (!price?.trim() || price === "—") return price ?? "—";
+  if (/p\.?\s*m\.?/i.test(price)) return price;
+  return `${price.trim()} p.m.`;
+}
+
+export function isMaatwerkPackage(client: ClientAccount): boolean {
+  return client.package.planId === "maatwerk";
+}
+
+export function isPackageIntakeComplete(client: ClientAccount): boolean {
+  if (hasPendingPackage(client) || client.package.planId === "none") return false;
+  if (isMaatwerkPackage(client)) {
+    return client.package.maatwerkPending !== true;
+  }
+  return Boolean(client.package.maintenanceId);
+}
+
 export function getPortalTasks(client: ClientAccount) {
   return PORTAL_TASKS.map((task) => {
-    const status = getIntakeStepStatus(client, task.key as IntakeStepKey);
+    const key = task.key as IntakeStepKey;
+    const status = getIntakeStepStatus(client, key);
     return {
       ...task,
       status,
@@ -109,9 +174,7 @@ export function getPortalTasks(client: ClientAccount) {
 }
 
 export function getPortalTaskProgress(client: ClientAccount) {
-  const tasks = getPortalTasks(client);
-  const done = tasks.filter((t) => t.done).length;
-  return `${done}/${tasks.length}`;
+  return getIntakeProgressLabel(client);
 }
 
 export const DASHBOARD_JOURNEY_STEPS = [
@@ -124,8 +187,11 @@ export const DASHBOARD_JOURNEY_STEPS = [
   { id: 7, label: "Betalen & versturen", href: "/portal/stap/betalen", key: "payment" as const },
 ];
 
+export { hasOpenIntegrationRequests };
+export { getEffectiveProjectProgress, canReachLive };
+
 export function isClientLive(client: ClientAccount): boolean {
-  return client.phase === "live" || client.progress.percent >= 100;
+  return client.phase === "live" && canReachLive(client);
 }
 
 export function computeProgressPercent(onboarding: OnboardingData): number {
@@ -206,29 +272,37 @@ export function getProgressPhaseLabel(percent: number, onboarding?: OnboardingDa
 }
 
 export function applyProjectProgress(client: ClientAccount, percent: number): ClientAccount {
-  const live = percent >= 100;
-  const phase = getProgressPhaseLabel(percent, client.onboarding);
+  const capped = capProjectProgress(client, percent);
   return {
-    ...client,
-    phase: live ? "live" : "build",
+    ...capped,
+    progressSettings: {
+      ...client.progressSettings,
+      manualOverrideEnabled: true,
+      manualPercent: percent,
+      manualPhase: capped.progress.phase,
+    },
     progress: {
-      ...client.progress,
-      percent,
-      phase,
-      steps: getBuildSteps(client.onboarding, percent),
-      lastUpdate: new Date().toISOString(),
-      ...(live && client.websiteUrl ? { liveUrl: client.websiteUrl } : {}),
+      ...capped.progress,
+      steps: getBuildSteps(capped.onboarding, capped.progress.percent),
     },
   };
 }
 
 export function getClientPreviewUrl(client: ClientAccount): string {
+  const preview = client.previewSettings;
+  if (preview?.enabled && preview.url) {
+    return preview.url.replace(/^https?:\/\//, "");
+  }
   const raw =
     client.progress.previewUrl ??
     client.websiteUrl ??
     client.onboarding.company.desiredDomain ??
     "preview.jouwbedrijf.works";
   return raw.replace(/^https?:\/\//, "");
+}
+
+export function getClientPreviewSettings(client: ClientAccount) {
+  return client.previewSettings;
 }
 
 export function getIntegrationStatus(

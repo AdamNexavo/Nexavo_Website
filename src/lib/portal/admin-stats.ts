@@ -1,10 +1,8 @@
 import type { ClientAccount, PaymentRecord } from "./types";
 import { getClientReferenceNumber, isClientLive, hasPendingPackage } from "./helpers";
+import { parseEuroAmount } from "./billing";
 
-export function parseEuroAmount(amount: string): number {
-  const num = parseFloat(amount.replace(/[^\d,]/g, "").replace(",", "."));
-  return Number.isNaN(num) ? 0 : num;
-}
+export { parseEuroAmount };
 
 export function formatEuro(amount: number): string {
   return `€${amount.toLocaleString("nl-NL", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { markInvoicePaid } from "@/lib/portal/invoices";
+import { applyClientPaymentReceived } from "@/lib/portal/helpers";
 import {
   computeAdminDashboardStats,
   formatEuro,
@@ -28,7 +29,7 @@ export default function AdminPaymentsPage() {
     const payments = client.payments.map((p) =>
       p.id === paymentId ? markInvoicePaid(p, client) : p,
     );
-    upsertClient({ ...client, payments });
+    upsertClient(applyClientPaymentReceived({ ...client, payments }));
     toast({ title: "Betaling gemarkeerd als betaald" });
     window.location.reload();
   };
@@ -94,7 +95,7 @@ export default function AdminPaymentsPage() {
             {pending
               .filter((p) => !overdue.some((o) => o.id === p.id))
               .map((p) => (
-                <div key={p.id} className="flex flex-wrap items-center justify-between gap-4 rounded-[14px] border border-[#E2E0DB] bg-[#FAFAF8] p-4">
+                <div key={p.id} className="flex flex-wrap items-center justify-between gap-4 rounded-[14px] border border-[#E2E0DB] bg-[#FAFAF8] shadow-block p-4">
                   <div>
                     <Link to={`/admin/klanten/${p.clientId}`} className="font-medium text-[#7547F8] hover:underline">
                       {p.clientName}

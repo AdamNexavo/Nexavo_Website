@@ -9,12 +9,24 @@ import {
   getClientByEmail,
   getInviteByToken,
   getSession,
+  initPortalStorage,
+  isRemotePortalStorage,
+  refreshPortalStorage,
   setSession,
   upsertClient,
   upsertInvite,
 } from "./storage";
 import { getPlanById, getMaintenanceById } from "./constants";
-import { createOneTimePackageInvoice } from "./invoices";
+import { ensureDemoAccounts } from "./demo-seed";
+import {
+  getSupabaseClient,
+  isPortalAdminUser,
+  isSupabasePortalEnabled,
+} from "./supabase-client";
+import {
+  fetchClientByAuthUserId,
+  insertPortalClientWithAuth,
+} from "./supabase-sync";
 
 const SALT = "nexavo-portal-v1";
 
@@ -40,13 +52,80 @@ export function getAdminCredentials() {
   };
 }
 
+async function restoreSupabaseSession(): Promise<PortalSession | null> {
+  if (!isSupabasePortalEnabled()) return getSession();
+
+  await initPortalStorage();
+  const supabase = getSupabaseClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session?.user) return null;
+
+  if (isPortalAdminUser(session.user)) {
+    await refreshPortalStorage();
+    const adminSession: PortalSession = {
+      type: "admin",
+      email: session.user.email ?? DEFAULT_ADMIN_EMAIL,
+      loggedInAt: new Date().toISOString(),
+    };
+    setSession(adminSession);
+    return adminSession;
+  }
+
+  const client = await fetchClientByAuthUserId(session.user.id);
+  if (!client?.active) {
+    await supabase.auth.signOut();
+    setSession(null);
+    return null;
+  }
+
+  await refreshPortalStorage();
+  const clientSession: PortalSession = {
+    type: "client",
+    clientId: client.id,
+    email: client.email,
+    loggedInAt: new Date().toISOString(),
+  };
+  setSession(clientSession);
+  return clientSession;
+}
+
+export async function bootstrapPortalAuth(): Promise<PortalSession | null> {
+  if (isSupabasePortalEnabled()) {
+    return restoreSupabaseSession();
+  }
+  ensureDemoAccounts();
+  return getSession();
+}
+
 export async function loginAdmin(email: string, password: string): Promise<PortalSession | null> {
+  if (isSupabasePortalEnabled()) {
+    await initPortalStorage();
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.toLowerCase(),
+      password,
+    });
+    if (error || !data.user || !isPortalAdminUser(data.user)) {
+      await supabase.auth.signOut();
+      return null;
+    }
+    await refreshPortalStorage();
+    const session: PortalSession = {
+      type: "admin",
+      email: data.user.email ?? email.toLowerCase(),
+      loggedInAt: new Date().toISOString(),
+    };
+    setSession(session);
+    return session;
+  }
+
   const creds = getAdminCredentials();
   const hash = await hashPassword(password);
-  if (
-    email.toLowerCase() === creds.email.toLowerCase() &&
-    hash === creds.passwordHash
-  ) {
+  const normalized = email.toLowerCase();
+  const adminEmails = new Set([creds.email.toLowerCase(), DEFAULT_ADMIN_EMAIL.toLowerCase()]);
+  if (adminEmails.has(normalized) && hash === creds.passwordHash) {
     const session: PortalSession = {
       type: "admin",
       email: creds.email,
@@ -59,6 +138,33 @@ export async function loginAdmin(email: string, password: string): Promise<Porta
 }
 
 export async function loginClient(email: string, password: string): Promise<PortalSession | null> {
+  if (isSupabasePortalEnabled()) {
+    await initPortalStorage();
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.toLowerCase(),
+      password,
+    });
+    if (error || !data.user) return null;
+
+    const client = await fetchClientByAuthUserId(data.user.id);
+    if (!client?.active) {
+      await supabase.auth.signOut();
+      return null;
+    }
+
+    await refreshPortalStorage();
+    const session: PortalSession = {
+      type: "client",
+      clientId: client.id,
+      email: client.email,
+      loggedInAt: new Date().toISOString(),
+    };
+    setSession(session);
+    return session;
+  }
+
+  ensureDemoAccounts();
   const client = getClientByEmail(email);
   if (!client || !client.active) return null;
   const hash = await hashPassword(password);
@@ -73,7 +179,11 @@ export async function loginClient(email: string, password: string): Promise<Port
   return session;
 }
 
-export function logout(): void {
+export async function logout(): Promise<void> {
+  if (isSupabasePortalEnabled()) {
+    const supabase = getSupabaseClient();
+    await supabase.auth.signOut();
+  }
   setSession(null);
 }
 
@@ -122,7 +232,6 @@ export async function registerClient(params: {
 
   const plan = getPlanById(planId);
   const maintenance = getMaintenanceById(maintenanceId);
-  const passwordHash = await hashPassword(params.password);
   const user: PortalUser = {
     firstName: params.firstName,
     lastName: params.lastName,
@@ -131,11 +240,11 @@ export async function registerClient(params: {
   };
 
   const clientId = generateId();
-  const clientBase: ClientAccount = {
+  const client: ClientAccount = {
     id: clientId,
     clientNumber: generateClientNumberFromId(clientId),
     email: params.email.toLowerCase(),
-    passwordHash,
+    passwordHash: "",
     user,
     companyName: params.companyName,
     createdAt: new Date().toISOString(),
@@ -165,20 +274,49 @@ export async function registerClient(params: {
     active: true,
   };
 
-  const client: ClientAccount = {
-    ...clientBase,
-    payments: pendingSelection
-      ? []
-      : [
-          createOneTimePackageInvoice(
-            clientBase,
-            plan?.name ?? planName,
-            plan?.price ?? "€1.495",
-          ),
-        ],
-  };
+  if (isSupabasePortalEnabled()) {
+    await initPortalStorage();
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.auth.signUp({
+      email: params.email.toLowerCase(),
+      password: params.password,
+      options: {
+        data: {
+          first_name: params.firstName,
+          last_name: params.lastName,
+          company_name: params.companyName,
+        },
+      },
+    });
+    if (error || !data.user) {
+      return { error: error?.message ?? "Registratie mislukt. Probeer het opnieuw." };
+    }
 
-  upsertClient(client);
+    try {
+      await insertPortalClientWithAuth({ client, authUserId: data.user.id });
+      await refreshPortalStorage();
+    } catch (insertError) {
+      await supabase.auth.signOut();
+      return {
+        error:
+          insertError instanceof Error
+            ? insertError.message
+            : "Account kon niet worden opgeslagen.",
+      };
+    }
+
+    const session: PortalSession = {
+      type: "client",
+      clientId: client.id,
+      email: client.email,
+      loggedInAt: new Date().toISOString(),
+    };
+    setSession(session);
+    return { client };
+  }
+
+  const passwordHash = await hashPassword(params.password);
+  upsertClient({ ...client, passwordHash });
   const session: PortalSession = {
     type: "client",
     clientId: client.id,
@@ -187,4 +325,8 @@ export async function registerClient(params: {
   };
   setSession(session);
   return { client };
+}
+
+export function isProductionPortalBackend(): boolean {
+  return isRemotePortalStorage();
 }

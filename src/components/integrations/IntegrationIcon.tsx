@@ -147,7 +147,7 @@ export const IntegrationIconTile = ({
   return (
     <div
       className={cn(
-        "flex items-center justify-center bg-white border border-border/40 shrink-0 overflow-hidden",
+        "flex items-center justify-center bg-[#F5F5F5] border border-[#E2E0DB]/80 shrink-0 overflow-hidden",
         isSquareLogo
           ? xl
             ? "h-20 w-20 rounded-2xl p-1"

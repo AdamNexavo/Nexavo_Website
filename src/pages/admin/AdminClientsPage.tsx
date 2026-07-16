@@ -21,8 +21,20 @@ import {
   formatEuro,
 } from "@/lib/portal/admin-stats";
 import { getClientReferenceNumber } from "@/lib/portal/helpers";
+import { getProcessingPayments } from "@/lib/portal/billing";
+import { countClientOpenRequests } from "@/lib/portal/applications";
+import { getEffectiveProjectProgress } from "@/lib/portal/project-progress";
 import { isTechnicalSetupComplete, getClientTechnicalSetup } from "@/lib/portal/websites";
 import { cn } from "@/lib/utils";
+
+type SortKey = "updated" | "newest" | "progress" | "payment";
+
+const SORT_OPTIONS: { id: SortKey; label: string }[] = [
+  { id: "updated", label: "Laatst bijgewerkt" },
+  { id: "newest", label: "Nieuwst" },
+  { id: "progress", label: "Voortgang" },
+  { id: "payment", label: "Openstaande betaling" },
+];
 
 const FILTERS: { id: "all" | ClientCrmStatus; label: string }[] = [
   { id: "all", label: "Alle" },
@@ -47,6 +59,7 @@ export default function AdminClientsPage() {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<(typeof FILTERS)[number]["id"]>("all");
+  const [sort, setSort] = useState<SortKey>("updated");
   const stats = computeAdminDashboardStats(clients);
 
   const filtered = useMemo(() => {
@@ -65,8 +78,17 @@ export default function AdminClientsPage() {
           c.user.lastName.toLowerCase().includes(q),
       );
     }
-    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [clients, filter, search]);
+    return [...list].sort((a, b) => {
+      if (sort === "newest") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      if (sort === "progress") return getEffectiveProjectProgress(b).percent - getEffectiveProjectProgress(a).percent;
+      if (sort === "payment") {
+        const aOpen = getProcessingPayments(a).length;
+        const bOpen = getProcessingPayments(b).length;
+        return bOpen - aOpen;
+      }
+      return new Date(b.progress.lastUpdate).getTime() - new Date(a.progress.lastUpdate).getTime();
+    });
+  }, [clients, filter, search, sort]);
 
   return (
     <div>
@@ -95,9 +117,20 @@ export default function AdminClientsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Zoek op bedrijf, e-mail, klantnummer..."
-              className="h-10 rounded-[12px] border-[#E2E0DB] pl-9"
+              className="h-10 rounded-[12px] border-[#E2E0DB] bg-white pl-9"
             />
           </div>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortKey)}
+            className="h-10 rounded-[12px] border border-[#E2E0DB] bg-white shadow-block px-3 text-[12px] text-[#374151]"
+          >
+            {SORT_OPTIONS.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.label}
+              </option>
+            ))}
+          </select>
           <div className="flex flex-wrap gap-1.5">
             {FILTERS.map((f) => (
               <button
@@ -105,8 +138,10 @@ export default function AdminClientsPage() {
                 type="button"
                 onClick={() => setFilter(f.id)}
                 className={cn(
-                  "rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors",
-                  filter === f.id ? "bg-[#7547F8] text-white" : "bg-[#F5F4F2] text-[#6B7280] hover:bg-[#EDE9FE]",
+                  "rounded-full border px-3 py-1.5 text-[12px] font-medium transition-colors",
+                  filter === f.id
+                    ? "border-[#7547F8] bg-white text-[#7547F8]"
+                    : "border-[#E2E0DB] bg-white text-[#6B7280] hover:border-[#7547F8]/30",
                 )}
               >
                 {f.label}
@@ -119,26 +154,30 @@ export default function AdminClientsPage() {
           <p className="p-6 text-[14px] text-[#6B7280]">Geen klanten gevonden.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[800px] text-left text-[13px]">
+            <table className="w-full min-w-[1100px] text-left text-[13px]">
               <thead>
-                <tr className="border-b border-[#E2E0DB] bg-[#FAFAF8] text-[11px] font-semibold uppercase tracking-wide text-[#9CA3AF]">
+                <tr className="border-b border-[#E2E0DB] bg-[#F5F5F5] text-[11px] font-semibold uppercase tracking-wide text-[#374151]">
                   <th className="px-4 py-3">Klant</th>
-                  <th className="px-4 py-3">Contact</th>
                   <th className="px-4 py-3">Pakket</th>
-                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Fase</th>
                   <th className="px-4 py-3">Voortgang</th>
+                  <th className="px-4 py-3">Open</th>
+                  <th className="px-4 py-3">Laatste activiteit</th>
                   <th className="px-4 py-3">Acties</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((c) => {
                   const status = getClientCrmStatus(c);
-                  const hasOpenPayment = c.payments.some((p) => p.status !== "paid");
+                  const effective = getEffectiveProjectProgress(c);
+                  const openPayments = getProcessingPayments(c).length;
+                  const openTickets = c.tickets.filter((t) => t.status !== "done" && t.status !== "out_of_scope").length;
+                  const openRequests = countClientOpenRequests(c);
                   return (
                     <tr
                       key={c.id}
                       onClick={() => navigate(`/admin/klanten/${c.id}`)}
-                      className="cursor-pointer border-b border-[#E2E0DB]/60 transition-colors hover:bg-[#FAFAF8]"
+                      className="cursor-pointer border-b border-[#E2E0DB]/60 bg-white transition-colors hover:bg-[#FAFAF8]"
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
@@ -147,34 +186,53 @@ export default function AdminClientsPage() {
                           </span>
                           <div>
                             <p className="font-semibold text-[#111111]">{c.companyName}</p>
-                            <p className="font-mono text-[11px] text-[#9CA3AF]">{getClientReferenceNumber(c)}</p>
+                            <p className="text-[12px] text-[#6B7280]">
+                              {c.user.firstName} {c.user.lastName}
+                            </p>
+                            <p className="font-mono text-[10px] text-[#9CA3AF]">{getClientReferenceNumber(c)}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <p className="font-medium">{c.user.firstName} {c.user.lastName}</p>
-                        <a href={`mailto:${c.email}`} className="text-[12px] text-[#7547F8] hover:underline">
-                          {c.email}
-                        </a>
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="font-medium">{c.package.planName}</p>
-                        <p className="text-[11px] text-[#9CA3AF]">{c.package.planPrice ?? "—"}</p>
+                        <p className="font-medium text-[#111111]">{c.package.planName}</p>
+                        <p className="text-[11px] text-[#9CA3AF]">{c.package.maintenanceName ?? "—"}</p>
                       </td>
                       <td className="px-4 py-3">
                         <ReferenceBadge variant={STATUS_VARIANT[status]}>{CRM_STATUS_LABELS[status]}</ReferenceBadge>
                         {!isTechnicalSetupComplete(getClientTechnicalSetup(c)) && (
-                          <p className="mt-1 text-[11px] text-[#B45309]">Technisch onvolledig</p>
-                        )}
-                        {hasOpenPayment && status !== "overdue" && (
-                          <p className="mt-1 text-[11px] text-[#9CA3AF]">Betaling open</p>
+                          <p className="mt-1 text-[10px] text-[#B45309]">Technisch onvolledig</p>
                         )}
                       </td>
                       <td className="px-4 py-3">
                         <div className="w-20">
-                          <PortalProgressBar percent={c.progress.percent} />
-                          <p className="mt-0.5 text-[11px] text-[#9CA3AF]">{c.progress.percent}%</p>
+                          <PortalProgressBar percent={effective.percent} />
+                          <p className="mt-0.5 text-[11px] text-[#9CA3AF]">{effective.percent}%</p>
                         </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-1">
+                          {openRequests > 0 && (
+                            <span className="rounded-full border border-[#E2E0DB] bg-white px-2 py-0.5 text-[10px] text-[#6B7280]">
+                              {openRequests} aanvragen
+                            </span>
+                          )}
+                          {openTickets > 0 && (
+                            <span className="rounded-full border border-[#E2E0DB] bg-white px-2 py-0.5 text-[10px] text-[#6B7280]">
+                              {openTickets} tickets
+                            </span>
+                          )}
+                          {openPayments > 0 && (
+                            <span className="rounded-full border border-[#FED7AA] bg-white px-2 py-0.5 text-[10px] text-[#B45309]">
+                              Betaling open
+                            </span>
+                          )}
+                          {openRequests === 0 && openTickets === 0 && openPayments === 0 && (
+                            <span className="text-[11px] text-[#9CA3AF]">—</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-[12px] text-[#6B7280]">
+                        {new Date(c.progress.lastUpdate).toLocaleDateString("nl-NL")}
                       </td>
                       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-1">

@@ -53,12 +53,15 @@ function NavItem({
   icon: Icon,
   exact,
   onNavigate,
+  plain,
 }: {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   exact?: boolean;
   onNavigate?: () => void;
+  /** Footer-style link: icon inline, aligned with Kennisbank */
+  plain?: boolean;
 }) {
   const location = useLocation();
   const [path, query] = href.split("?");
@@ -77,14 +80,24 @@ function NavItem({
           : "text-[#6B7280] hover:bg-[#EDE9FE]/60 hover:text-[#7547F8]",
       )}
     >
-      <span
-        className={cn(
-          "flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
-          active ? "bg-[#7547F8] text-white" : "bg-transparent text-[#9CA3AF]",
-        )}
-      >
-        <Icon className="h-[14px] w-[14px]" strokeWidth={1.75} />
-      </span>
+      {plain ? (
+        <Icon
+          className={cn(
+            "h-[14px] w-[14px] shrink-0",
+            active ? "text-[#7547F8]" : "text-[#9CA3AF]",
+          )}
+          strokeWidth={1.75}
+        />
+      ) : (
+        <span
+          className={cn(
+            "flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
+            active ? "bg-[#7547F8] text-white" : "bg-transparent text-[#9CA3AF]",
+          )}
+        >
+          <Icon className="h-[14px] w-[14px]" strokeWidth={1.75} />
+        </span>
+      )}
       {label}
     </Link>
   );
@@ -116,7 +129,7 @@ export function ReferenceSidebar({ className, onNavigate }: ReferenceSidebarProp
   return (
     <aside
       className={cn(
-        "flex h-screen w-[220px] shrink-0 flex-col overflow-hidden border-r border-[#E2E0DB] bg-[#FAFAF8] px-2.5 py-3",
+        "flex h-screen w-[220px] shrink-0 flex-col overflow-hidden border-r border-[#E2E0DB] bg-[#F3F3F2] px-2.5 py-3",
         className,
       )}
     >
@@ -127,7 +140,7 @@ export function ReferenceSidebar({ className, onNavigate }: ReferenceSidebarProp
       </div>
 
       {!introDismissed && (
-        <div className="relative mb-4 rounded-[14px] border border-[#E2E0DB] bg-[#F5F5F5] p-3">
+        <div className="relative mb-4 rounded-[14px] border border-[#E2E0DB] bg-[#F5F5F5] p-3 shadow-block">
           <button
             type="button"
             onClick={dismissIntro}
@@ -189,15 +202,15 @@ export function ReferenceSidebar({ className, onNavigate }: ReferenceSidebarProp
       </nav>
 
       <div className="mt-3 space-y-1 border-t border-[#E2E0DB] pt-3">
-        <NavItem href="/portal/profiel" label="Profiel" icon={User} onNavigate={onNavigate} />
+        <NavItem href="/portal/profiel" label="Profiel" icon={User} onNavigate={onNavigate} plain />
         <a
           href={ROUTES.kennisbank}
           target="_blank"
           rel="noopener noreferrer"
           onClick={onNavigate}
-          className="flex items-center gap-2 rounded-[10px] px-2 py-1.5 text-[12px] font-medium text-[#6B7280] transition-colors hover:bg-[#EDE9FE]/60 hover:text-[#7547F8]"
+          className="flex items-center gap-2 rounded-[10px] bg-[#EBEBEA] px-2 py-1.5 text-[12px] font-medium text-[#374151] transition-colors hover:bg-[#E0E0E0] hover:text-[#111111]"
         >
-          <Lightbulb className="h-[14px] w-[14px] shrink-0" strokeWidth={1.75} />
+          <Lightbulb className="h-[14px] w-[14px] shrink-0 text-[#6B7280]" strokeWidth={1.75} />
           Kennisbank
           <ExternalLink className="ml-auto h-3.5 w-3.5 text-[#9CA3AF]" />
         </a>
@@ -206,7 +219,7 @@ export function ReferenceSidebar({ className, onNavigate }: ReferenceSidebarProp
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="flex w-full items-center gap-2.5 rounded-[14px] border border-[#E2E0DB] bg-white px-2.5 py-2 text-left shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:bg-[#FAFAF8]"
+              className="flex w-full items-center gap-2.5 rounded-[14px] border border-[#E2E0DB] bg-white px-2.5 py-2 text-left shadow-block transition-colors hover:bg-[#FAFAF8]"
             >
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#F5F5F5] text-[10px] font-semibold text-[#374151]">
                 {client?.user.avatarInitials ?? userName[0]?.toUpperCase()}

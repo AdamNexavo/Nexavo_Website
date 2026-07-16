@@ -101,7 +101,7 @@ export default function AdminInvitesPage() {
           </div>
         </div>
 
-        <label className="flex cursor-pointer items-start gap-3 rounded-[12px] border border-[#E2E0DB] bg-[#FAFAF8] p-4">
+        <label className="flex cursor-pointer items-start gap-3 rounded-[12px] border border-[#E2E0DB] bg-[#FAFAF8] shadow-block p-4">
           <Checkbox
             checked={form.noPackage}
             onCheckedChange={(v) => setForm({ ...form, noPackage: v === true })}
@@ -122,7 +122,7 @@ export default function AdminInvitesPage() {
               <select
                 value={form.planId}
                 onChange={(e) => setForm({ ...form, planId: e.target.value as PlanId })}
-                className="mt-1.5 flex h-10 w-full rounded-[12px] border border-[#E2E0DB] bg-white px-3 text-[14px]"
+                className="mt-1.5 flex h-10 w-full rounded-[12px] border border-[#E2E0DB] bg-white shadow-block px-3 text-[14px]"
               >
                 {Object.entries(planLabels).map(([id, label]) => (
                   <option key={id} value={id}>{label}</option>
@@ -134,7 +134,7 @@ export default function AdminInvitesPage() {
               <select
                 value={form.maintenanceId}
                 onChange={(e) => setForm({ ...form, maintenanceId: e.target.value })}
-                className="mt-1.5 flex h-10 w-full rounded-[12px] border border-[#E2E0DB] bg-white px-3 text-[14px]"
+                className="mt-1.5 flex h-10 w-full rounded-[12px] border border-[#E2E0DB] bg-white shadow-block px-3 text-[14px]"
               >
                 {maintenancePackages.map((p) => (
                   <option key={p.id} value={p.id}>{p.name} — {p.price}/mnd</option>
@@ -160,7 +160,7 @@ export default function AdminInvitesPage() {
         ) : (
           <div className="space-y-3">
             {invites.map((i) => (
-              <div key={i.id} className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[#E2E0DB] bg-[#FAFAF8] p-4">
+              <div key={i.id} className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[#E2E0DB] bg-[#FAFAF8] shadow-block p-4">
                 <div>
                   <p className="font-medium">{i.companyName}</p>
                   <p className="text-[13px] text-[#6B7280]">

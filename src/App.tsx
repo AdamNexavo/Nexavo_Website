@@ -50,6 +50,7 @@ import AdminPaymentsPage from "./pages/admin/AdminPaymentsPage";
 import AdminApplicationsPage from "./pages/admin/AdminApplicationsPage";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
 import AdminWebsitesPage from "./pages/admin/AdminWebsitesPage";
+import AdminMailPage from "./pages/admin/AdminMailPage";
 
 const queryClient = new QueryClient();
 
@@ -123,6 +124,7 @@ const App = () => (
               <Route path="tickets" element={<AdminTicketsPage />} />
               <Route path="betalingen" element={<AdminPaymentsPage />} />
               <Route path="aanvragen" element={<AdminApplicationsPage />} />
+              <Route path="mail" element={<AdminMailPage />} />
               <Route path="instellingen" element={<AdminSettingsPage />} />
             </Route>
 

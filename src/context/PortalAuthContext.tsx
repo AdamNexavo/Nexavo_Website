@@ -9,14 +9,15 @@ import {
 } from "react";
 import type { ClientAccount, PortalSession } from "@/lib/portal/types";
 import {
-  getCurrentSession,
+  bootstrapPortalAuth,
   loginAdmin,
   loginClient,
   logout as authLogout,
   registerClient,
 } from "@/lib/portal/auth";
-import { getClientById } from "@/lib/portal/storage";
+import { getClientById, initPortalStorage, refreshPortalStorage } from "@/lib/portal/storage";
 import { migrateClient } from "@/lib/portal/types";
+import { isSupabasePortalEnabled } from "@/lib/portal/supabase-client";
 
 interface PortalAuthContextValue {
   session: PortalSession | null;
@@ -34,7 +35,7 @@ interface PortalAuthContextValue {
     companyName: string;
     inviteToken?: string;
   }) => Promise<{ ok: boolean; error?: string }>;
-  logout: () => void;
+  logout: () => Promise<void>;
   refreshClient: () => void;
 }
 
@@ -45,8 +46,7 @@ export function PortalAuthProvider({ children }: { children: ReactNode }) {
   const [client, setClient] = useState<ClientAccount | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const refreshClient = useCallback(() => {
-    const current = getCurrentSession();
+  const loadClientFromSession = useCallback((current: PortalSession | null) => {
     if (current?.type === "client" && current.clientId) {
       const raw = getClientById(current.clientId);
       setClient(raw ? migrateClient(raw) : null);
@@ -55,32 +55,61 @@ export function PortalAuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  useEffect(() => {
-    const current = getCurrentSession();
-    setSessionState(current);
-    if (current?.type === "client" && current.clientId) {
-      const loaded = getClientById(current.clientId);
-      if (!loaded) {
-        authLogout();
-        setSessionState(null);
-        setClient(null);
-      } else {
-        setClient(migrateClient(loaded));
-      }
+  const refreshClient = useCallback(() => {
+    const current = session;
+    if (isSupabasePortalEnabled()) {
+      void refreshPortalStorage().then(() => loadClientFromSession(current));
+      return;
     }
-    setIsLoading(false);
-  }, []);
+    loadClientFromSession(current);
+  }, [loadClientFromSession, session]);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const result = await loginClient(email, password);
-    if (!result) return { ok: false, error: "Onjuist e-mailadres of wachtwoord." };
-    setSessionState(result);
-    if (result.clientId) {
-      const loaded = getClientById(result.clientId);
-      setClient(loaded ? migrateClient(loaded) : null);
-    }
-    return { ok: true };
-  }, []);
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        await initPortalStorage();
+        const current = await bootstrapPortalAuth();
+        if (cancelled) return;
+
+        if (current?.type === "client" && current.clientId) {
+          const loaded = getClientById(current.clientId);
+          if (!loaded) {
+            await authLogout();
+            setSessionState(null);
+            setClient(null);
+          } else {
+            setSessionState(current);
+            setClient(migrateClient(loaded));
+          }
+        } else {
+          setSessionState(current);
+          setClient(null);
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loadClientFromSession]);
+
+  const login = useCallback(
+    async (email: string, password: string) => {
+      const result = await loginClient(email, password);
+      if (!result) return { ok: false, error: "Onjuist e-mailadres of wachtwoord." };
+      setSessionState(result);
+      if (result.clientId) {
+        const loaded = getClientById(result.clientId);
+        setClient(loaded ? migrateClient(loaded) : null);
+      }
+      return { ok: true };
+    },
+    [],
+  );
 
   const loginAsAdmin = useCallback(async (email: string, password: string) => {
     const result = await loginAdmin(email, password);
@@ -101,16 +130,22 @@ export function PortalAuthProvider({ children }: { children: ReactNode }) {
     }) => {
       const result = await registerClient(params);
       if (result.error) return { ok: false, error: result.error };
-      const current = getCurrentSession();
-      setSessionState(current);
-      if (result.client) setClient(result.client);
+      if (result.client) {
+        setSessionState({
+          type: "client",
+          clientId: result.client.id,
+          email: result.client.email,
+          loggedInAt: new Date().toISOString(),
+        });
+        setClient(result.client);
+      }
       return { ok: true };
     },
     [],
   );
 
-  const logout = useCallback(() => {
-    authLogout();
+  const logout = useCallback(async () => {
+    await authLogout();
     setSessionState(null);
     setClient(null);
   }, []);

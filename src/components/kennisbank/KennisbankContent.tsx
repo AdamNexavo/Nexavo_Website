@@ -116,7 +116,7 @@ export const KennisbankBrowse = ({
   const content = (
     <div className={cn("grid gap-8 lg:grid-cols-[260px_1fr] lg:gap-10", embedded && "mt-12")}>
       <aside className="lg:sticky lg:top-28 lg:self-start">
-        <div className="rounded-2xl border border-border/40 bg-white p-4 shadow-sm md:p-5">
+        <div className="rounded-2xl border border-border/40 bg-white shadow-card p-4 shadow-sm md:p-5">
           <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
             Categorieën
           </p>
@@ -173,7 +173,7 @@ export const KennisbankBrowse = ({
 
       <div className="min-w-0 space-y-8">
         {query.trim() && (
-          <div className="rounded-2xl border border-border/40 bg-white px-5 py-4">
+          <div className="rounded-2xl border border-border/40 bg-white shadow-card px-5 py-4">
             <p className="text-sm text-muted-foreground">
               {searchResults.length === 0 ? (
                 <>
@@ -214,7 +214,7 @@ export const KennisbankBrowse = ({
                 <a
                   key={article.id}
                   href={`#${article.id}`}
-                  className="group rounded-2xl border border-border/40 bg-white p-4 transition-all hover:border-primary/25 hover:shadow-sm"
+                  className="group rounded-2xl border border-border/40 bg-white shadow-card p-4 transition-all hover:border-primary/25 hover:shadow-sm"
                 >
                   <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-primary">
                     {article.categoryTitle}
@@ -256,7 +256,7 @@ export const KennisbankBrowse = ({
                 className="scroll-mt-28"
               >
                 <div className="mb-5 flex items-start gap-4 rounded-2xl border border-border/40 bg-[#f8f6f1] p-5 md:p-6">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border/50 bg-white">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border/50 bg-white shadow-card">
                     <Icon className="h-5 w-5 text-primary" strokeWidth={1.75} />
                   </div>
                   <div>
@@ -276,7 +276,7 @@ export const KennisbankBrowse = ({
                       id={article.id}
                       value={`${category.id}-${index}`}
                       variant="flat"
-                      className="scroll-mt-32 overflow-hidden rounded-2xl border border-border/40 bg-white px-5 md:px-6"
+                      className="scroll-mt-32 overflow-hidden rounded-2xl border border-border/40 bg-white shadow-card px-5 md:px-6"
                     >
                       <AccordionTrigger className="py-5 text-left text-[15px] font-semibold text-foreground hover:no-underline md:text-base">
                         {article.question}

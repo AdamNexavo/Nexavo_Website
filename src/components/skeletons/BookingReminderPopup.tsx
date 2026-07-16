@@ -86,7 +86,7 @@ export const BookingReminderPopup = ({ className }: BookingReminderPopupProps) =
               showcaseCardShadow,
             )}
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#ebe8e4] bg-[#fafaf9]">
+            <div className="flex h">
               <Icon className={cn("h-4 w-4", active.iconClass)} strokeWidth={1.75} />
             </div>
             <div className="min-w-0">

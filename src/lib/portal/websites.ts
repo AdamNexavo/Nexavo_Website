@@ -1,4 +1,4 @@
-import type { ClientAccount, ClientTechnicalSetup, ClientWebsite } from "./types";
+import type { ClientAccount, ClientTechnicalSetup, TechnicalSetupChecklist, ClientWebsite } from "./types";
 import { generateId } from "./storage";
 import { getHostingProvider, resolveProviderLoginUrl } from "./hosting-providers";
 
@@ -8,9 +8,28 @@ export type ClientWebsiteWithMeta = ClientWebsite & {
   clientRef: string;
 };
 
+export const TECHNICAL_CHECKLIST_ITEMS: {
+  key: keyof TechnicalSetupChecklist;
+  label: string;
+  required: boolean;
+}[] = [
+  { key: "intakeReceived", label: "Intake ontvangen", required: true },
+  { key: "previewCreated", label: "Website preview aangemaakt", required: true },
+  { key: "domainLinked", label: "Domein gekoppeld", required: true },
+  { key: "dnsChecked", label: "DNS gecontroleerd", required: false },
+  { key: "sslActive", label: "SSL actief", required: true },
+  { key: "formsTested", label: "Formulieren getest", required: true },
+  { key: "integrationsChecked", label: "Koppelingen gecontroleerd", required: true },
+  { key: "pixelAdded", label: "Pixel toegevoegd", required: false },
+  { key: "reviewFlowChecked", label: "Reviewflow gecontroleerd", required: false },
+  { key: "bookingFlowChecked", label: "Boekingsflow gecontroleerd", required: false },
+  { key: "technicallyComplete", label: "Website technisch compleet", required: true },
+];
+
 export function inferWebsiteStatus(client: ClientAccount): ClientWebsite["status"] {
-  if (client.phase === "live" || client.progress.percent >= 100) return "live";
-  if (client.progress.previewUrl || client.progress.percent >= 25) return "preview";
+  if (client.phase === "live" && client.progress.percent >= 100) return "live";
+  if (client.previewSettings?.enabled || client.progress.previewUrl || client.progress.percent >= 25)
+    return "preview";
   return "draft";
 }
 
@@ -65,14 +84,32 @@ export function createDefaultTechnicalSetup(client: ClientAccount): ClientTechni
     domainName: domain,
     dnsManagedBy: "client",
     pixelInstalled: false,
+    checklist: {
+      intakeReceived: client.onboarding.completed,
+    },
   };
 }
 
 export function getClientTechnicalSetup(client: ClientAccount): ClientTechnicalSetup {
-  return client.technicalSetup ?? createDefaultTechnicalSetup(client);
+  const base = client.technicalSetup ?? createDefaultTechnicalSetup(client);
+  return {
+    ...base,
+    checklist: {
+      intakeReceived: client.onboarding.completed,
+      ...base.checklist,
+    },
+  };
+}
+
+export function getRequiredChecklistComplete(setup: ClientTechnicalSetup): boolean {
+  const checklist = setup.checklist ?? {};
+  return TECHNICAL_CHECKLIST_ITEMS.filter((i) => i.required).every((item) => checklist[item.key] === true);
 }
 
 export function isTechnicalSetupComplete(setup: ClientTechnicalSetup): boolean {
+  if (setup.checklist?.technicallyComplete) {
+    return getRequiredChecklistComplete(setup);
+  }
   if (!setup.hostingProvider?.trim()) return false;
   if (!setup.domainOwnership) return false;
   if (!setup.domainName?.trim()) return false;
@@ -84,12 +121,35 @@ export function isTechnicalSetupComplete(setup: ClientTechnicalSetup): boolean {
 
 export function getTechnicalSetupMissing(setup: ClientTechnicalSetup): string[] {
   const missing: string[] = [];
+  const checklist = setup.checklist ?? {};
+  for (const item of TECHNICAL_CHECKLIST_ITEMS.filter((i) => i.required)) {
+    if (!checklist[item.key]) missing.push(item.label);
+  }
   if (!setup.hostingProvider?.trim()) missing.push("Hosting provider");
   if (!setup.domainName?.trim()) missing.push("Domeinnaam");
   if (!setup.domainOwnership) missing.push("Domein eigendom");
   const loginUrl = resolveProviderLoginUrl(setup.hostingProvider, setup.providerLoginUrl);
-  if (!loginUrl) missing.push("Provider login-URL");
-  return missing;
+  if (!loginUrl && setup.hostingProvider !== "other") missing.push("Provider login-URL");
+  return [...new Set(missing)];
+}
+
+export function syncTechnicalChecklist(setup: ClientTechnicalSetup): ClientTechnicalSetup {
+  const checklist = setup.checklist ?? {};
+  const requiredDone = getRequiredChecklistComplete(setup);
+  const pixelOk = checklist.pixelAdded === true || setup.pixelInstalled === true;
+  const technicallyComplete = requiredDone && (!checklist.pixelAdded || pixelOk);
+
+  return {
+    ...setup,
+    pixelInstalled: setup.pixelInstalled ?? checklist.pixelAdded ?? false,
+    checklist: {
+      ...checklist,
+      pixelAdded: checklist.pixelAdded ?? setup.pixelInstalled ?? false,
+      technicallyComplete: checklist.technicallyComplete ? technicallyComplete : checklist.technicallyComplete,
+    },
+    completed: setup.completed && technicallyComplete ? true : setup.completed,
+    updatedAt: new Date().toISOString(),
+  };
 }
 
 export function addClientWebsite(

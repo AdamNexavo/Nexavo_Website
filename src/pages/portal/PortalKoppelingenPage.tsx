@@ -6,6 +6,7 @@ import {
   ReferencePageTitle,
   ReferenceModal,
   ReferenceCard,
+  ReferenceSection,
 } from "@/components/portal/reference/ReferenceUI";
 import {
   integrations,
@@ -24,7 +25,12 @@ import { upsertClient } from "@/lib/portal/storage";
 import { useToast } from "@/hooks/use-toast";
 import type { IntegrationRequest } from "@/lib/portal/types";
 import type { ClientAccount } from "@/lib/portal/types";
+import { createIntegrationRequest } from "@/lib/portal/applications";
+import { notifyIntegrationRequested } from "@/lib/mail/service";
+import { capProjectProgress } from "@/lib/portal/project-progress";
 import { PortalIntegrationAppCard } from "@/components/portal/PortalIntegrationAppCard";
+import { IntegrationIconTile } from "@/components/integrations/IntegrationIcon";
+import { ReferencePanelCard } from "@/components/portal/MailboxUI";
 
 type SortOption = "name-asc" | "name-desc" | "status";
 
@@ -79,19 +85,26 @@ export default function PortalKoppelingenPage() {
       ? client.onboarding.integrations
       : [...client.onboarding.integrations, requestName];
     const entry = integrations.find((i) => i.name === requestName);
-    const request: IntegrationRequest = {
+    const request: IntegrationRequest = createIntegrationRequest({
       integrationId: entry?.slug ?? requestName,
       name: requestName,
       note: useCase + (note ? `\n${note}` : ""),
-      requestedAt: new Date().toISOString(),
-    };
-    upsertClient({
-      ...client,
-      onboarding: { ...client.onboarding, integrations: integrationsList },
-      integrationStatuses,
-      integrationRequests: [...(client.integrationRequests ?? []).filter((r) => r.name !== requestName), request],
     });
+    const updated = capProjectProgress(
+      {
+        ...client,
+        onboarding: { ...client.onboarding, integrations: integrationsList },
+        integrationStatuses,
+        integrationRequests: [
+          ...(client.integrationRequests ?? []).filter((r) => r.name !== requestName),
+          request,
+        ],
+      },
+      client.progress.percent,
+    );
+    upsertClient(updated);
     refreshClient();
+    void notifyIntegrationRequested(updated, requestName);
     setRequestName(null);
     setNote("");
     setUseCase("");
@@ -102,48 +115,54 @@ export default function PortalKoppelingenPage() {
     <div>
       <ReferencePageTitle title="Koppelingen" subtitle="Koppel tools aan je website — zelfde catalogus als op nexavo.works." />
 
-      <ReferenceCard className="mb-6">
-        <h2 className="text-[15px] font-semibold text-[#111111]">Mijn koppelingen</h2>
-        <p className="mt-0.5 text-[13px] text-[#6B7280]">
-          Alleen goedgekeurde en actieve koppelingen verschijnen hier.
-        </p>
-
-        {activeIntegrations.length === 0 ? (
-          <div className="mt-4 rounded-[14px] border border-dashed border-[#E2E0DB] bg-[#FAFAF8] px-4 py-6 text-center">
+      <ReferencePanelCard
+        className="mb-6"
+        title="Mijn koppelingen"
+        subtitle={
+          pendingIntegrations.length > 0
+            ? "Aangevraagde koppelingen wachten op goedkeuring door Nexavo."
+            : "Alleen goedgekeurde en actieve koppelingen verschijnen hier."
+        }
+      >
+        {activeIntegrations.length === 0 && pendingIntegrations.length === 0 ? (
+          <div className="bg-white px-4 py-6 text-center">
             <p className="text-[14px] font-medium text-[#111111]">Je hebt nog geen actieve koppelingen</p>
             <p className="mt-1 text-[13px] text-[#6B7280]">
               Bekijk ons aanbod hieronder en vraag een koppeling aan. Na goedkeuring door Nexavo verschijnt deze hier.
             </p>
           </div>
         ) : (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="divide-y divide-[#E2E0DB] bg-white">
             {activeIntegrations.map((item) => (
-              <PortalIntegrationAppCard
-                key={`mine-${item.slug}`}
-                integration={item}
-                compact
-                status="active"
-              />
+              <div key={`mine-${item.slug}`} className="px-4 py-3">
+                <PortalIntegrationAppCard integration={item} compact status="active" />
+              </div>
             ))}
+            {pendingIntegrations.map((item) => {
+              const req = client.integrationRequests?.find((r) => r.name === item.name);
+              return (
+                <div key={`pending-${item.slug}`} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                  <div className="flex min-w-0 flex-1 items-start gap-3">
+                    <IntegrationIconTile integration={item} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[14px] font-semibold text-[#111111]">{item.name}</p>
+                      <p className="mt-0.5 line-clamp-2 text-[12px] text-[#6B7280]">{item.cardDescription}</p>
+                      {req && (
+                        <p className="mt-1 text-[11px] text-[#9CA3AF]">
+                          Aangevraagd {new Date(req.requestedAt).toLocaleDateString("nl-NL")}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-[#EDE9FE] px-3 py-1 text-[12px] font-medium text-[#7547F8]">
+                    In behandeling
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
-
-        {pendingIntegrations.length > 0 && (
-          <div className="mt-5 border-t border-[#E2E0DB] pt-4">
-            <p className="mb-3 text-[12px] font-semibold uppercase tracking-wide text-[#9CA3AF]">In behandeling</p>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {pendingIntegrations.map((item) => (
-                <PortalIntegrationAppCard
-                  key={`pending-${item.slug}`}
-                  integration={item}
-                  compact
-                  status={getIntegrationStatus(client, item.name)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-      </ReferenceCard>
+      </ReferencePanelCard>
 
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative w-full sm:max-w-xs">

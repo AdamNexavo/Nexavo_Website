@@ -84,6 +84,8 @@ export default {
       boxShadow: {
         soft: "var(--shadow-soft)",
         card: "var(--shadow-card)",
+        block: "var(--shadow-block)",
+        row: "var(--shadow-row)",
         hover: "var(--shadow-hover)",
         featured: "var(--shadow-featured)",
       },

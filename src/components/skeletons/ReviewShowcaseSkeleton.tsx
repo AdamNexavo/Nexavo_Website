@@ -64,7 +64,7 @@ export const ReviewShowcaseSkeleton = ({
         </div>
 
         <div className={cn("space-y-3 bg-white", compact ? "p-3" : "p-4 md:p-5")}>
-          <div className="rounded-xl border border-[#ebe8e4] bg-[#fafaf9] p-3">
+          <div className="rounded-xl border border-[#ebe8e4] bg-[#fafaf9] shadow-block p-3">
             <div className="mb-2 flex items-start gap-2.5">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#eceae6] text-[10px] font-semibold text-foreground">
                 LB
@@ -90,7 +90,7 @@ export const ReviewShowcaseSkeleton = ({
             </div>
           </div>
 
-          <div className="rounded-xl border border-[#ebe8e4] bg-white p-3">
+          <div className="rounded-xl border border-[#ebe8e4] bg-white shadow-block p-3">
             <div className="mb-2 flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
               <p className="text-[10px] font-semibold text-foreground">Automatisch verzoek</p>

@@ -10,8 +10,8 @@ type IntegrationCardProps = {
 };
 
 export const integrationCardClass = cn(
-  "group flex flex-col items-center justify-center rounded-2xl border border-[#e8e6e2] bg-[#f6f6f7] p-5 md:p-6",
-  "transition-colors duration-200 hover:border-[#dedee2] hover:bg-[#efeff1]",
+  "group flex flex-col items-center justify-center rounded-2xl border border-[#e8e6e2] bg-[#f6f6f7] p-5 md:p-6 shadow-card",
+  "transition-colors duration-200 hover:border-[#dedee2] hover:bg-[#efeff1] hover:shadow-hover",
 );
 
 export const IntegrationCard = ({

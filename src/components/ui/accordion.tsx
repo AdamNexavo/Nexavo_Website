@@ -18,8 +18,8 @@ const AccordionItem = React.forwardRef<
     ref={ref}
     className={cn(
       variant === "card" &&
-        "rounded-2xl border border-border bg-card px-6 md:px-8",
-      variant === "flat" && "border-0 border-b border-border/60 rounded-none bg-transparent px-0 shadow-none",
+        "rounded-2xl border border-border bg-card px-6 md:px-8 shadow-card",
+      variant === "flat" && "border-0 border-b border-border/60 rounded-none bg-transparent px-0",
       className,
     )}
     {...props}

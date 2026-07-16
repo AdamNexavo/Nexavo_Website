@@ -86,7 +86,7 @@ export const ContactBookingPanel = () => {
         </p>
       </div>
 
-      <div className="rounded-2xl border border-border/60 bg-[#fafaf9] p-4 md:p-5">
+      <div className="rounded-2xl border border-border/60 bg-[#fafaf9] shadow-card p-4 md:p-5">
         <div className="mb-4 flex items-center justify-between">
           <p className="text-sm font-semibold text-foreground">Kies een dag</p>
           <div className="flex items-center gap-2">
@@ -177,7 +177,7 @@ export const ContactBookingPanel = () => {
         </div>
       )}
 
-      <div className="mt-5 flex items-center justify-between gap-3 rounded-xl border border-border/50 bg-white px-3 py-2.5 text-sm text-muted-foreground">
+      <div className="mt-5 flex items-center justify-between gap-3 rounded-xl border border-border/50 bg-white shadow-card px-3 py-2.5 text-sm text-muted-foreground">
         <span className="font-medium text-foreground">Tijdzone</span>
         <span className="inline-flex items-center gap-1.5">
           <Globe className="h-3.5 w-3.5" />

@@ -45,7 +45,7 @@ export const ServiceCatalogCard = ({
       to={`/diensten/${service.slug}`}
       className={cn("group block h-full", className)}
     >
-      <article className="flex h-full flex-col overflow-hidden rounded-[1.5rem] border border-border/40 bg-[#f8f6f1] transition-all duration-200 hover:border-border/70 hover:shadow-hover sm:rounded-[1.65rem]">
+      <article className="flex h-full flex-col overflow-hidden rounded-[1.5rem] border border-border/40 bg-[#f8f6f1] shadow-card transition-all duration-200 hover:border-border/70 hover:shadow-hover sm:rounded-[1.65rem]">
         <ServiceCatalogVisual
           skeletonId={service.skeleton}
           variant={cardVariant}

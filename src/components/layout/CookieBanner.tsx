@@ -38,7 +38,7 @@ export const CookieBanner = () => {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 12, scale: 0.98 }}
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed bottom-4 right-4 left-4 sm:left-auto sm:max-w-[360px] z-[100] rounded-2xl border border-border/60 bg-white p-6 shadow-[0_20px_60px_-24px_rgba(0,0,0,0.35)]"
+          className="fixed bottom-4 right-4 left-4 sm:left-auto sm:max-w-[360px] z-[100] rounded-2xl border border-border/60 bg-white shadow-card p-6 shadow-[0_20px_60px_-24px_rgba(0,0,0,0.35)]"
         >
           <h2
             id="cookie-banner-title"

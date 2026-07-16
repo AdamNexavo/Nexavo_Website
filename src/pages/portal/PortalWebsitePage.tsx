@@ -1,5 +1,5 @@
 import { usePortalAuth } from "@/context/PortalAuthContext";
-import { PortalPageHeader } from "@/components/portal/PortalUI";
+import { ReferencePageTitle } from "@/components/portal/reference/ReferenceUI";
 import { WebsiteStatsPanel } from "@/components/portal/WebsiteStatsPanel";
 
 export default function PortalWebsitePage() {
@@ -8,11 +8,12 @@ export default function PortalWebsitePage() {
 
   return (
     <div className="space-y-6">
-      <PortalPageHeader
+      <ReferencePageTitle
         title="Website"
-        subtitle="Statistieken, prestaties en preview van je website — alles op één plek."
+        subtitle="Statistieken en prestaties van je website."
       />
-      <WebsiteStatsPanel client={client} showPreview />
+
+      <WebsiteStatsPanel client={client} showPreview={false} />
     </div>
   );
 }

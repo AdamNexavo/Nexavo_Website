@@ -150,7 +150,7 @@ export const ContactReachability = () => (
       {cards.map((card) => (
         <article
           key={card.title}
-          className="flex h-full flex-col rounded-[18px] border border-border/40 bg-[#f8f6f1] p-6 md:p-7"
+          className="flex h-full flex-col rounded-[18px] border border-border/40 bg-[#f8f6f1] shadow-card p-6 md:p-7"
         >
           <IconBadge icon={card.icon} variant={card.iconVariant} />
 

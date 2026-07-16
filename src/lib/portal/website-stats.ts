@@ -24,6 +24,33 @@ export const DEMO_CONVERSION_ROWS = [
   { label: "E-mail geklikt", pct: 18, color: "bg-[#C4B5FD]" },
 ];
 
+export const DEMO_TRAFFIC_SOURCES = [
+  { source: "Google", pct: 54, color: "bg-[#7547F8]" },
+  { source: "Direct", pct: 22, color: "bg-[#A78BFA]" },
+  { source: "Social", pct: 14, color: "bg-[#C4B5FD]" },
+  { source: "Overig", pct: 10, color: "bg-[#E9D5FF]" },
+];
+
+export const DEMO_DEVICES = [
+  { device: "Mobiel", pct: 58 },
+  { device: "Desktop", pct: 38 },
+  { device: "Tablet", pct: 4 },
+];
+
+export const DEMO_MONTHLY_VISITORS = [
+  { week: "W1", bezoekers: 42 },
+  { week: "W2", bezoekers: 58 },
+  { week: "W3", bezoekers: 71 },
+  { week: "W4", bezoekers: 77 },
+];
+
+export const DEMO_TOP_KEYWORDS = [
+  { term: "webdesign nederland", clicks: 86 },
+  { term: "website laten maken", clicks: 64 },
+  { term: "online marketing", clicks: 41 },
+  { term: "bedrijfswebsite", clicks: 29 },
+];
+
 export type WebsiteStatCard = {
   label: string;
   value: string;

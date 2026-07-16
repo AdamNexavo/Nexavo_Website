@@ -44,10 +44,10 @@ const BookingSectionSkeleton = ({ className }: { className?: string }) => (
         <div className="mb-4 flex items-center justify-between">
           <h4 className="text-sm font-semibold text-foreground">Maart 2026</h4>
           <div className="flex gap-1.5">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#ebe8e4] bg-[#fafaf9] text-xs text-muted-foreground">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#ebe8e4] bg-[#fafaf9] shadow-block text-xs text-muted-foreground">
               ‹
             </span>
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#ebe8e4] bg-[#fafaf9] text-xs text-muted-foreground">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#ebe8e4] bg-[#fafaf9] shadow-block text-xs text-muted-foreground">
               ›
             </span>
           </div>
@@ -92,7 +92,7 @@ const BookingSectionSkeleton = ({ className }: { className?: string }) => (
           {appointments.map((item) => (
             <div
               key={item.name}
-              className="flex items-center gap-2 rounded-xl border border-[#ebe8e4] bg-[#fafaf9] p-2"
+              className="flex items-center gap-2 rounded-xl border border-[#ebe8e4] bg-[#fafaf9] shadow-block p-2"
             >
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#eceae6] text-[10px] font-semibold text-foreground">
                 {item.initials}
@@ -157,10 +157,10 @@ const BookingCatalogSkeleton = ({ className }: { className?: string }) => (
           <p className="text-sm font-semibold text-foreground">Boek een afspraak</p>
         </div>
         <div className="flex gap-1">
-          <span className="flex h-6 w-6 items-center justify-center rounded-lg border border-[#ebe8e4] bg-[#fafaf9] text-[10px] text-muted-foreground">
+          <span className="flex h-6 w-6 items-center justify-center rounded-lg border border-[#ebe8e4] bg-[#fafaf9] shadow-block text-[10px] text-muted-foreground">
             ‹
           </span>
-          <span className="flex h-6 w-6 items-center justify-center rounded-lg border border-[#ebe8e4] bg-[#fafaf9] text-[10px] text-muted-foreground">
+          <span className="flex h-6 w-6 items-center justify-center rounded-lg border border-[#ebe8e4] bg-[#fafaf9] shadow-block text-[10px] text-muted-foreground">
             ›
           </span>
         </div>
@@ -199,7 +199,7 @@ const BookingCatalogSkeleton = ({ className }: { className?: string }) => (
           })}
         </div>
 
-        <div className="space-y-2 rounded-xl border border-[#ebe8e4] bg-[#fafaf9] p-2.5">
+        <div className="space-y-2 rounded-xl border border-[#ebe8e4] bg-[#fafaf9] shadow-block p-2.5">
           <div className="flex items-center gap-2">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#eceae6] text-[10px] font-semibold text-foreground">
               MJ

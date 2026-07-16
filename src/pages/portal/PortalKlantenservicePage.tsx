@@ -7,6 +7,8 @@ import { PortalInlineChat } from "@/components/portal/PortalInlineChat";
 import { contactInfo } from "@/data/contact";
 import { ROUTES } from "@/lib/routes";
 import { ReferenceCard } from "@/components/portal/reference/ReferenceUI";
+import { MailboxRow, ReferencePanelCard } from "@/components/portal/MailboxUI";
+import { TICKET_STATUSES, TICKET_STATUS_VARIANT } from "@/lib/portal/constants";
 
 const QUICK_LINKS = [
   {
@@ -52,14 +54,14 @@ export default function PortalKlantenservicePage() {
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <a
               href={`tel:${contactInfo.primaryPhone.replace(/[\s()]/g, "")}`}
-              className="flex items-center gap-3 rounded-[12px] border border-[#E5E5E5] bg-white px-4 py-3 text-[14px] transition-colors hover:bg-[#FAFAFA]"
+              className="flex items-center gap-3 rounded-[12px] border border-[#E5E5E5] bg-white shadow-block px-4 py-3 text-[14px] transition-colors hover:bg-[#FAFAFA]"
             >
               <Phone className="h-4 w-4 shrink-0 text-[#7547F8]" />
               {contactInfo.primaryPhone}
             </a>
             <a
               href={`mailto:${contactInfo.email.support}`}
-              className="flex items-center gap-3 rounded-[12px] border border-[#E5E5E5] bg-white px-4 py-3 text-[14px] transition-colors hover:bg-[#FAFAFA]"
+              className="flex items-center gap-3 rounded-[12px] border border-[#E5E5E5] bg-white shadow-block px-4 py-3 text-[14px] transition-colors hover:bg-[#FAFAFA]"
             >
               <Mail className="h-4 w-4 shrink-0 text-[#7547F8]" />
               {contactInfo.email.support}
@@ -83,7 +85,7 @@ export default function PortalKlantenservicePage() {
             to={item.href}
             target={item.external ? "_blank" : undefined}
             rel={item.external ? "noopener noreferrer" : undefined}
-            className="group rounded-[16px] border border-[#E5E5E5] bg-[#F5F5F5] p-4 transition-colors hover:border-[#7547F8]/30"
+            className="group rounded-[16px] border border-[#E2E0DB] bg-white p-4 transition-colors hover:border-[#7547F8]/30"
           >
             <item.icon className="mb-2 h-5 w-5 text-[#7547F8]" strokeWidth={1.75} />
             <p className="text-[14px] font-semibold text-[#111111]">{item.title}</p>
@@ -95,10 +97,44 @@ export default function PortalKlantenservicePage() {
         ))}
       </div>
 
-      <PortalCard>
+      <ReferencePanelCard
+        title="Supporttickets"
+        subtitle="Recente tickets — klik om het volledige overzicht te openen"
+        action={
+          <Button asChild variant="outline" size="sm" className="rounded-full">
+            <Link to="/portal/tickets">Alle tickets</Link>
+          </Button>
+        }
+      >
+        {client.tickets.length === 0 ? (
+          <p className="bg-white px-5 py-8 text-center text-[13px] text-[#6B7280]">Nog geen tickets ingediend.</p>
+        ) : (
+          <div>
+            {client.tickets.slice(0, 5).map((t) => {
+              const lastMsg = t.messages[t.messages.length - 1];
+              return (
+                <MailboxRow
+                  key={t.id}
+                  badge={<span className="font-mono text-[10px] text-[#9CA3AF]">{t.number}</span>}
+                  title={t.subject}
+                  meta={t.category}
+                  preview={lastMsg?.body}
+                  date={new Date(t.updatedAt ?? t.createdAt).toLocaleDateString("nl-NL")}
+                  status={TICKET_STATUSES[t.status]}
+                  statusVariant={TICKET_STATUS_VARIANT[t.status]}
+                  unread={t.status === "new" || t.status === "open"}
+                  onClick={() => (window.location.href = `/portal/tickets`)}
+                />
+              );
+            })}
+          </div>
+        )}
+      </ReferencePanelCard>
+
+      <PortalCard className="mt-8">
         <h3 className="mb-1 text-[16px] font-semibold">Nexavo assistent</h3>
         <p className="mb-4 text-[13px] text-[#6B7280]">
-          Stel een korte vraag — voor wijzigingen aan je website open je het beste een ticket.
+          Hulp bij je lopende project — voor wijzigingen aan je website open je het beste een ticket.
         </p>
         <PortalInlineChat />
       </PortalCard>

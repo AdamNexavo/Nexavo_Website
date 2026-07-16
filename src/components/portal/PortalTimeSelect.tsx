@@ -33,7 +33,7 @@ export function PortalTimeSelect({
     <Select value={value ?? ""} onValueChange={onChange} disabled={disabled}>
       <SelectTrigger
         className={cn(
-          "h-10 rounded-full border-0 bg-[#F5F4F2] px-4 text-[14px] shadow-none focus:ring-[#7547F8]/30",
+          "h-10 rounded-full border-0 bg-[#F5F4F2] px-4 text-[14px] shadow-card focus:ring-[#7547F8]/30",
           className,
         )}
       >

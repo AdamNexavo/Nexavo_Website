@@ -99,7 +99,7 @@ export const Header = () => {
             className={cn(
               !atHero && "border-border/60 bg-[#f5f5f7] hover:bg-[#ececea]",
               atHero &&
-                "border-white/25 bg-white/[0.12] text-white shadow-none backdrop-blur-sm hover:border-white/35 hover:bg-white/20 hover:text-white",
+                "border-white/25 bg-white/[0.12] text-white shadow-card backdrop-blur-sm hover:border-white/35 hover:bg-white/20 hover:text-white",
             )}
           >
             <Link to={ROUTES.portal.login}>Login klantenportaal</Link>
@@ -110,7 +110,7 @@ export const Header = () => {
             variant={atHero ? "outline" : "default"}
             className={cn(
               atHero &&
-                "border-white bg-white text-foreground shadow-none hover:bg-white/90 hover:text-foreground",
+                "border-white bg-white text-foreground shadow-card hover:bg-white/90 hover:text-foreground",
             )}
           >
             <Link to={ROUTES.contact}>Plan demo</Link>

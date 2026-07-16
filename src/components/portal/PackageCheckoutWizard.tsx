@@ -13,16 +13,21 @@ import {
   PORTAL_ADDONS,
   maintenancePackages,
 } from "@/lib/portal/constants";
-import { addPaymentTermDays } from "@/lib/portal/helpers";
-import { createOneTimePackageInvoice } from "@/lib/portal/invoices";
+import { addPaymentTermDays, formatMonthlyPriceDisplay } from "@/lib/portal/helpers";
 import { pricingPackages as allPlans } from "@/data/pricing";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { PortalPricingSelectCard, PortalCompareLink } from "@/components/portal/PortalPricingSelectCard";
+import { PortalPricingSelectRow, PortalMaintenanceSelectRow, PortalCompareLink } from "@/components/portal/PortalPricingSelectCard";
 import { validateIntakeStep } from "@/lib/portal/step-validation";
 import { planIncludesAddon } from "@/lib/portal/package-features";
 import { IntakeValidationDialog } from "@/components/portal/IntakeValidationDialog";
+import {
+  MaatwerkWishlistPicker,
+  MaatwerkCompletionBlock,
+  getMaatwerkWishlistFromClient,
+} from "@/components/portal/MaatwerkWishlistPicker";
+import type { MaatwerkWishlist } from "@/lib/portal/types";
 
 const CHECKOUT_STEPS = [
   { id: "packages", label: "Pakket" },
@@ -48,31 +53,82 @@ export function PackageCheckoutWizard({
   const { client, refreshClient } = usePortalAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [step, setStep] = useState("packages");
+  const [step, setStep] = useState(() => {
+    const pkg = client?.package;
+    if (pkg?.planId === "maatwerk" && pkg.pendingSelection === false) return "confirm";
+    return "packages";
+  });
   const [selectedPlan, setSelectedPlan] = useState(client?.package.planId ?? "");
   const [selectedMaintenance, setSelectedMaintenance] = useState(client?.package.maintenanceId ?? "plus");
   const [selectedAddons, setSelectedAddons] = useState<string[]>(client?.package.selectedAddons ?? []);
   const [validationDialogOpen, setValidationDialogOpen] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [maatwerkWishlist, setMaatwerkWishlist] = useState<MaatwerkWishlist>(() =>
+    client ? getMaatwerkWishlistFromClient(client) : { pages: [], integrations: [], addons: [] },
+  );
+  const [maatwerkJustConfirmed, setMaatwerkJustConfirmed] = useState(false);
 
   useEffect(() => {
     setSelectedAddons((prev) => prev.filter((id) => !planIncludesAddon(selectedPlan, id)));
   }, [selectedPlan]);
 
+  useEffect(() => {
+    if (!client) return;
+    setMaatwerkWishlist(getMaatwerkWishlistFromClient(client));
+  }, [client?.id, client?.package.maatwerkWishlist, client?.onboarding.desiredPages, client?.onboarding.integrations]);
+
   if (!client) return null;
 
   const plan = getPlanById(selectedPlan);
   const maintenance = getMaintenanceById(selectedMaintenance);
+  const isMaatwerkSelected = selectedPlan === "maatwerk";
+  const maatwerkSubmitted =
+    maatwerkJustConfirmed ||
+    (client.package.planId === "maatwerk" &&
+      client.package.pendingSelection === false &&
+      client.package.maatwerkPending === true);
+
+  const persistMaatwerkWishlist = (wishlist: MaatwerkWishlist) => {
+    upsertClient({
+      ...client,
+      package: {
+        ...client.package,
+        maatwerkWishlist: wishlist,
+      },
+      onboarding: {
+        ...client.onboarding,
+        desiredPages: wishlist.pages.length > 0 ? wishlist.pages : client.onboarding.desiredPages,
+        integrations:
+          wishlist.integrations.length > 0 ? wishlist.integrations : client.onboarding.integrations,
+      },
+    });
+    refreshClient();
+  };
+
+  const handleMaatwerkWishlistChange = (wishlist: MaatwerkWishlist) => {
+    setMaatwerkWishlist(wishlist);
+    persistMaatwerkWishlist(wishlist);
+  };
+
+  const markSelectionPending = () => {
+    if (client.package.pendingSelection) return;
+    upsertClient({
+      ...client,
+      package: { ...client.package, pendingSelection: true },
+    });
+    refreshClient();
+  };
 
   const toggleAddon = (id: string) => {
     if (planIncludesAddon(selectedPlan, id)) return;
     setSelectedAddons((prev) => (prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]));
+    markSelectionPending();
   };
 
   const confirmCheckout = () => {
-    if (!plan) return;
+    if (!plan) return false;
     const isMaatwerk = selectedPlan === "maatwerk";
-    if (!isMaatwerk && !maintenance) return;
+    if (!isMaatwerk && !maintenance) return false;
     const billableAddons = selectedAddons.filter((id) => !planIncludesAddon(selectedPlan, id));
     upsertClient({
       ...client,
@@ -83,27 +139,42 @@ export function PackageCheckoutWizard({
         maintenanceId: isMaatwerk ? undefined : selectedMaintenance,
         maintenanceName: isMaatwerk ? undefined : maintenance?.name,
         monthlyPrice: isMaatwerk ? "—" : (maintenance?.price ?? "€99"),
-        maintenanceIncluded: maintenance?.highlights ?? [],
+        maintenanceIncluded: isMaatwerk ? [] : (maintenance?.highlights ?? []),
         pendingSelection: false,
-        selectedAddons: billableAddons,
+        maatwerkPending: isMaatwerk,
+        maatwerkWishlist: isMaatwerk ? maatwerkWishlist : undefined,
+        selectedAddons: isMaatwerk ? [] : billableAddons,
       },
-      payments: isMaatwerk
-        ? client.payments
-        : client.payments.some((p) => p.billingType === "one_time" && p.status !== "paid")
-          ? client.payments
-          : [
-              ...client.payments.filter((p) => p.billingType !== "one_time" || p.status === "paid"),
-              createOneTimePackageInvoice(client, plan.name, plan.price),
-            ],
+      onboarding: isMaatwerk
+        ? {
+            ...client.onboarding,
+            desiredPages:
+              maatwerkWishlist.pages.length > 0
+                ? maatwerkWishlist.pages
+                : client.onboarding.desiredPages,
+            integrations:
+              maatwerkWishlist.integrations.length > 0
+                ? maatwerkWishlist.integrations
+                : client.onboarding.integrations,
+          }
+        : client.onboarding,
     });
     refreshClient();
-    toast({ title: "Pakket opgeslagen", description: "Je keuze is bevestigd." });
+    if (isMaatwerk) setMaatwerkJustConfirmed(true);
+    toast({
+      title: isMaatwerk ? "Maatwerk-aanvraag ontvangen" : "Pakket opgeslagen",
+      description: isMaatwerk
+        ? "We nemen zo snel mogelijk contact met je op om alles samen in te delen."
+        : "Je keuze is bevestigd.",
+    });
     return true;
   };
 
   const goBack = () => {
     if (step === "maintenance") setStep("packages");
-    else if (step === "confirm") setStep("maintenance");
+    else if (step === "confirm") {
+      setStep(isMaatwerkSelected ? "packages" : "maintenance");
+    }
   };
 
   const goNext = () => {
@@ -118,7 +189,7 @@ export function PackageCheckoutWizard({
     (step === "packages" && (!selectedPlan || selectedPlan === "none")) ||
     (step === "maintenance" && selectedPlan !== "maatwerk" && !selectedMaintenance);
 
-  const persistSelection = () => {
+  const saveDraftSelection = () => {
     if (!selectedPlan || selectedPlan === "none") return;
     const isMaatwerk = selectedPlan === "maatwerk";
     const billableAddons = selectedAddons.filter((id) => !planIncludesAddon(selectedPlan, id));
@@ -132,7 +203,10 @@ export function PackageCheckoutWizard({
         maintenanceId: isMaatwerk ? undefined : selectedMaintenance,
         maintenanceName: isMaatwerk ? undefined : maintenance?.name,
         monthlyPrice: isMaatwerk ? "—" : (maintenance?.price ?? client.package.monthlyPrice),
-        pendingSelection: false,
+        maintenanceIncluded: maintenance?.highlights ?? client.package.maintenanceIncluded ?? [],
+        pendingSelection: true,
+        maatwerkPending: isMaatwerk ? client.package.maatwerkPending : false,
+        maatwerkWishlist: isMaatwerk ? maatwerkWishlist : undefined,
         selectedAddons: billableAddons,
       },
     });
@@ -142,23 +216,10 @@ export function PackageCheckoutWizard({
   const stepIndex = CHECKOUT_STEPS.findIndex((s) => s.id === step);
 
   const saveAndBack = () => {
-    if (step === "confirm") confirmCheckout();
-    else if (selectedPlan && selectedPlan !== "none" && maintenance) {
-      upsertClient({
-        ...client,
-        package: {
-          ...client.package,
-          planId: selectedPlan,
-          planName: plan?.name ?? client.package.planName,
-          planPrice: plan?.price ?? client.package.planPrice,
-          maintenanceId: selectedMaintenance,
-          maintenanceName: maintenance?.name,
-          monthlyPrice: maintenance?.price ?? client.package.monthlyPrice,
-          pendingSelection: false,
-          selectedAddons,
-        },
-      });
-      refreshClient();
+    if (step === "confirm") {
+      confirmCheckout();
+    } else {
+      saveDraftSelection();
     }
     toast({ title: "Opgeslagen" });
     onSaved?.();
@@ -166,10 +227,25 @@ export function PackageCheckoutWizard({
   };
 
   const saveAndContinue = () => {
-    if (step === "confirm") {
-      if (!confirmCheckout()) return;
-    } else {
-      persistSelection();
+    const maatwerkAlreadySubmitted =
+      client.package.planId === "maatwerk" &&
+      client.package.pendingSelection === false &&
+      client.package.maatwerkPending === true;
+
+    if (step !== "confirm" && !maatwerkAlreadySubmitted) {
+      saveDraftSelection();
+      setValidationErrors([
+        isMaatwerkSelected
+          ? "Bevestig je aanvraag met 'Aanvraag bevestigen' voordat je naar de volgende stap gaat."
+          : "Bevestig je pakketkeuze met 'Keuze bevestigen' voordat je naar de volgende stap gaat.",
+      ]);
+      setValidationDialogOpen(true);
+      return;
+    }
+    if (!maatwerkAlreadySubmitted && !confirmCheckout()) return;
+    if (isMaatwerkSelected || maatwerkAlreadySubmitted) {
+      if (nextStepHref) navigate(nextStepHref);
+      return;
     }
     const check = validateIntakeStep(
       {
@@ -177,8 +253,13 @@ export function PackageCheckoutWizard({
         package: {
           ...client.package,
           planId: selectedPlan,
+          planName: plan?.name ?? client.package.planName,
+          planPrice: plan?.price ?? client.package.planPrice,
           pendingSelection: false,
           maintenanceId: selectedPlan === "maatwerk" ? undefined : selectedMaintenance,
+          maintenanceName: selectedPlan === "maatwerk" ? undefined : maintenance?.name,
+          monthlyPrice: selectedPlan === "maatwerk" ? "—" : (maintenance?.price ?? client.package.monthlyPrice),
+          selectedAddons: selectedAddons.filter((id) => !planIncludesAddon(selectedPlan, id)),
         },
       },
       "package",
@@ -192,20 +273,41 @@ export function PackageCheckoutWizard({
     if (nextStepHref) navigate(nextStepHref);
   };
 
-  const packageValidationClient = {
-    ...client,
-    package: {
-      ...client.package,
-      planId: selectedPlan || client.package.planId,
-      pendingSelection: !selectedPlan || selectedPlan === "none",
-      maintenanceId: selectedPlan === "maatwerk" ? undefined : selectedMaintenance,
-    },
-  };
-  const packageStepComplete = validateIntakeStep(
-    { ...packageValidationClient, package: { ...packageValidationClient.package, pendingSelection: false } },
-    "package",
-  ).valid;
-  const canContinuePackage = embedded ? packageStepComplete : stepComplete;
+  const wizardNavButtonClass =
+    "rounded-full border-[#E2E0DB] bg-[#F5F5F5] text-[#111111] shadow-none hover:bg-[#EBEBEA]";
+
+  const wizardStepNav = (
+    <div className="flex flex-wrap items-center justify-end gap-2">
+      {stepIndex > 0 && (
+        <Button variant="outline" onClick={goBack} className={wizardNavButtonClass}>
+          Vorige
+        </Button>
+      )}
+      {step !== "confirm" && (
+        <Button variant="outline" onClick={goNext} disabled={nextDisabled} className={wizardNavButtonClass}>
+          {step === "packages" ? (
+            <>
+              <span className="font-semibold">Volgende:</span>{" "}
+              {isMaatwerkSelected ? "Bevestigen →" : "Onderhoud →"}
+            </>
+          ) : step === "maintenance" ? (
+            <>
+              <span className="font-semibold">Volgende:</span> Bevestigen →
+            </>
+          ) : (
+            <>
+              <span className="font-semibold">Volgende</span> →
+            </>
+          )}
+        </Button>
+      )}
+      {step === "confirm" && !maatwerkSubmitted && (
+        <Button variant="outline" onClick={() => confirmCheckout()} className={wizardNavButtonClass}>
+          {isMaatwerkSelected ? "Aanvraag bevestigen" : "Keuze bevestigen"}
+        </Button>
+      )}
+    </div>
+  );
 
   return (
     <div>
@@ -243,65 +345,68 @@ export function PackageCheckoutWizard({
         <div>
           {step === "packages" && (
             <>
-              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                {allPlans.filter((p) => p.id !== "maatwerk").map((pkg) => (
-                  <PortalPricingSelectCard
+              <div className="space-y-1">
+                {allPlans.map((pkg) => (
+                  <PortalPricingSelectRow
                     key={pkg.id}
                     pkg={pkg}
-                    compact
                     selected={selectedPlan === pkg.id}
-                    onSelect={() => setSelectedPlan(pkg.id)}
+                    onSelect={() => {
+                      setSelectedPlan(pkg.id);
+                      markSelectionPending();
+                    }}
                   />
                 ))}
               </div>
-              {allPlans.filter((p) => p.id === "maatwerk").map((pkg) => (
-                <div key={pkg.id} className="mt-3 max-w-md">
-                  <PortalPricingSelectCard
-                    pkg={pkg}
-                    compact
-                    selected={selectedPlan === pkg.id}
-                    onSelect={() => setSelectedPlan(pkg.id)}
-                  />
-                </div>
-              ))}
-              <PortalCompareLink className="mt-4" />
+              {embedded && <div className="mt-4">{wizardStepNav}</div>}
+              <PortalCompareLink className={embedded ? "mt-3" : "mt-4"} />
             </>
           )}
 
           {step === "maintenance" && selectedPlan !== "maatwerk" && (
             <>
-              <ReferenceCard>
-                <h3 className="mb-1 text-[15px] font-semibold">Maandelijks onderhoud</h3>
-                <p className="mb-4 text-[13px] text-[#6B7280]">Verplicht gedurende de initiële contractperiode.</p>
-                <div className="grid gap-3 sm:grid-cols-3">
-                  {maintenancePackages.map((pkg) => (
-                    <button
-                      key={pkg.id}
-                      type="button"
-                      onClick={() => setSelectedMaintenance(pkg.id)}
-                      className={cn(
-                        "rounded-[14px] border p-4 text-left transition-colors",
-                        selectedMaintenance === pkg.id
-                          ? "border-[#7547F8] bg-[#EDE9FE]/25"
-                          : "border-[#E2E0DB] hover:border-[#7547F8]/30",
-                      )}
-                    >
-                      {pkg.badge && (
-                        <span className="mb-1 inline-block text-[10px] font-medium text-[#10B981]">{pkg.badge}</span>
-                      )}
-                      <p className="text-[14px] font-semibold">{pkg.name}</p>
-                      <p className="text-[18px] font-semibold">{pkg.price}</p>
-                      <p className="text-[11px] text-[#9CA3AF]">{pkg.priceNote}</p>
-                    </button>
-                  ))}
-                </div>
-              </ReferenceCard>
-              <PortalCompareLink className="mt-5" />
+              <p className="mb-1 text-[15px] font-semibold text-[#111111]">Maandelijks onderhoud</p>
+              <p className="mb-3 text-[13px] text-[#6B7280]">
+                Verplicht gedurende de initiële contractperiode.
+              </p>
+              <div className="space-y-1">
+                {maintenancePackages.map((pkg) => (
+                  <PortalMaintenanceSelectRow
+                    key={pkg.id}
+                    pkg={pkg}
+                    selected={selectedMaintenance === pkg.id}
+                    onSelect={() => {
+                      setSelectedMaintenance(pkg.id);
+                      markSelectionPending();
+                    }}
+                  />
+                ))}
+              </div>
+              {embedded && <div className="mt-4">{wizardStepNav}</div>}
+              <PortalCompareLink className={embedded ? "mt-3" : "mt-5"} />
             </>
           )}
 
           {step === "confirm" && (
             <div className="space-y-4">
+              {isMaatwerkSelected ? (
+                maatwerkSubmitted ? (
+                  <MaatwerkCompletionBlock wishlist={maatwerkWishlist} />
+                ) : (
+                  <ReferenceCard className="space-y-3">
+                    <h3 className="text-[15px] font-semibold">Maatwerk — persoonlijk contact</h3>
+                    <p className="text-[14px] leading-relaxed text-[#6B7280]">
+                      Je hebt gekozen voor maatwerk. Bevestig je aanvraag hieronder. Daarna nemen we zo snel mogelijk
+                      contact met je op om alles samen in te delen.
+                    </p>
+                    <MaatwerkWishlistPicker
+                      value={maatwerkWishlist}
+                      onChange={handleMaatwerkWishlistChange}
+                    />
+                  </ReferenceCard>
+                )
+              ) : (
+                <>
               <ReferenceCard className="space-y-3">
                 <h3 className="text-[15px] font-semibold">Je selectie</h3>
                 <div className="grid gap-3 sm:grid-cols-2 text-[13px]">
@@ -313,7 +418,7 @@ export function PackageCheckoutWizard({
                   <div className="rounded-[12px] bg-[#FAFAF8] p-3">
                     <p className="text-[#9CA3AF]">Onderhoud</p>
                     <p className="font-semibold">{maintenance?.name}</p>
-                    <p className="text-[#7547F8]">{maintenance?.price} {maintenance?.priceNote}</p>
+                    <p className="text-[#7547F8]">{formatMonthlyPriceDisplay(maintenance?.price)}</p>
                   </div>
                 </div>
               </ReferenceCard>
@@ -360,30 +465,39 @@ export function PackageCheckoutWizard({
                   })}
                 </div>
               </ReferenceCard>
+                </>
+              )}
             </div>
           )}
+          {embedded && step === "confirm" && <div className="mt-4">{wizardStepNav}</div>}
 
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[#E2E0DB] pt-4">
-            <div className="flex gap-2">
-              {stepIndex > 0 && (
-                <Button variant="outline" onClick={goBack}>
-                  Vorige
-                </Button>
-              )}
+          {!embedded && (
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[#E2E0DB] pt-4">
+              <div className="flex gap-2">
+                {stepIndex > 0 && (
+                  <Button variant="outline" onClick={goBack}>
+                    Vorige
+                  </Button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                {step !== "confirm" && (
+                  <Button variant="brand" onClick={goNext} disabled={nextDisabled}>
+                    {step === "packages" && isMaatwerkSelected
+                      ? "Volgende: Bevestigen →"
+                      : step === "maintenance"
+                        ? "Volgende: Bevestigen →"
+                        : "Volgende →"}
+                  </Button>
+                )}
+                {step === "confirm" && !maatwerkSubmitted && (
+                  <Button variant="brand" onClick={() => confirmCheckout()}>
+                    {isMaatwerkSelected ? "Aanvraag bevestigen" : "Pakket bevestigen"}
+                  </Button>
+                )}
+              </div>
             </div>
-            <div className="flex gap-2">
-              {step !== "confirm" && (
-                <Button variant="brand" onClick={goNext} disabled={nextDisabled}>
-                  {step === "maintenance" ? "Volgende: Bevestigen →" : "Volgende →"}
-                </Button>
-              )}
-              {step === "confirm" && (
-                <Button variant="brand" onClick={() => confirmCheckout()}>
-                  Pakket bevestigen
-                </Button>
-              )}
-            </div>
-          </div>
+          )}
         </div>
 
         {!embedded && (
@@ -391,7 +505,7 @@ export function PackageCheckoutWizard({
             planName={plan?.name ?? "Kies een pakket"}
             planPrice={plan?.price ?? "—"}
             maintenanceLine={
-              maintenance ? `Onderhoud ${maintenance.price} ${maintenance.priceNote}` : undefined
+              maintenance ? `Onderhoud ${formatMonthlyPriceDisplay(maintenance.price)}` : undefined
             }
             extraLines={selectedAddons
               .filter((id) => !planIncludesAddon(selectedPlan, id))
@@ -404,7 +518,7 @@ export function PackageCheckoutWizard({
       </div>
 
       {embedded && (
-        <div className="mt-5 flex flex-wrap justify-end gap-3 border-t border-[#E2E0DB] pt-4">
+        <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-[#E2E0DB] pt-4">
           <Button variant="default" onClick={saveAndBack}>
             Opslaan & terug
           </Button>

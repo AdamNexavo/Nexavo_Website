@@ -33,6 +33,7 @@ export const ROUTES = {
     aanvragen: "/admin/aanvragen",
     tickets: "/admin/tickets",
     betalingen: "/admin/betalingen",
+    mail: "/admin/mail",
   },
 } as const;
 

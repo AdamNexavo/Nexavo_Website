@@ -9,7 +9,6 @@ import {
   DialogPortal,
 } from "@/components/ui/dialog";
 
-/* ─── Design tokens (referentie-screenshots) ─── */
 export const ref = {
   bg: "#FAFAFA",
   card: "#FFFFFF",
@@ -24,6 +23,9 @@ export const ref = {
   successBg: "#ECFDF5",
 } as const;
 
+/** Consistent elevation for portal/admin blocks */
+export const referenceBlockShadow = "shadow-block";
+
 /* ─── Layout ─── */
 
 export function ReferenceShell({ children }: { children: React.ReactNode }) {
@@ -37,7 +39,7 @@ export function ReferenceShell({ children }: { children: React.ReactNode }) {
 export function ReferenceMain({ children }: { children: React.ReactNode }) {
   return (
     <main className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-white">
-      <div className="w-full px-3 py-5 md:px-4 md:py-6">{children}</div>
+      <div className="w-full px-5 pt-8 pb-6 md:px-10 md:pt-10 md:pb-8 lg:px-14 lg:pt-12">{children}</div>
     </main>
   );
 }
@@ -53,8 +55,8 @@ export function ReferenceCard({
   return (
     <div
       className={cn(
-        "rounded-[16px] border border-[#E2E0DB] p-4 md:p-5",
-        muted ? "bg-[#EAEAEA]" : "bg-[#F5F5F5] shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
+        "rounded-[16px] border border-[#E2E0DB] p-4 md:p-5 shadow-block",
+        muted ? "bg-[#EAEAEA]" : "bg-[#F5F5F5]",
         className,
       )}
       {...props}
@@ -72,7 +74,58 @@ export function ReferenceInnerCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className={cn("rounded-[16px] border border-[#E2E0DB] bg-[#FAFAF8] p-4", className)}>
+    <div
+      className={cn(
+        "rounded-[16px] border border-[#E2E0DB] bg-white p-4 shadow-block",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** Lichtgrijze sectiecontainer — nested cards should use ReferenceWhiteCard */
+export function ReferenceSection({
+  className,
+  children,
+  title,
+  subtitle,
+}: {
+  className?: string;
+  children: React.ReactNode;
+  title?: string;
+  subtitle?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-[16px] border border-[#E2E0DB] bg-[#F5F5F5] p-4 md:p-5 shadow-block",
+        className,
+      )}
+    >
+      {title && <h2 className="text-[15px] font-semibold text-[#111111]">{title}</h2>}
+      {subtitle && <p className="mt-0.5 text-[13px] text-[#6B7280]">{subtitle}</p>}
+      {children}
+    </div>
+  );
+}
+
+/** Witte kaart binnen een grijze sectie */
+export function ReferenceWhiteCard({
+  className,
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-[14px] border border-[#E2E0DB] bg-white p-4 shadow-block",
+        className,
+      )}
+    >
       {children}
     </div>
   );
@@ -364,7 +417,7 @@ function taskRowClass(status: ReferenceTaskStatus, active?: boolean) {
   if (active) return "bg-[#EDE9FE] ring-1 ring-[#7547F8]/25";
   if (status === "complete") return "bg-[#FAFAF8]";
   if (status === "partial") return "bg-[#FFF7ED] hover:bg-[#FFEDD5]/40";
-  return "bg-[#F5F5F5] hover:bg-[#EBEBEA]";
+  return "bg-white hover:bg-[#FAFAF8]";
 }
 
 export function ReferenceTaskList({
@@ -384,7 +437,7 @@ export function ReferenceTaskList({
     <ReferenceCard>
       <div className="mb-3 flex items-start justify-between gap-3">
         <h2 className="max-w-lg text-[14px] font-semibold leading-snug text-[#111111]">{title}</h2>
-        <span className="shrink-0 rounded-full bg-[#F5F5F5] px-2 py-0.5 text-[11px] font-semibold text-[#6B7280]">
+        <span className="shrink-0 rounded-full border border-[#E2E0DB] bg-white px-2 py-0.5 text-[11px] font-semibold text-[#6B7280]">
           {progress}
         </span>
       </div>
@@ -394,7 +447,7 @@ export function ReferenceTaskList({
           return (
           <div key={task.id}>
             {task.action ? (
-              <div className="flex items-center justify-between gap-3 rounded-[12px] bg-[#F5F5F5] px-3 py-3">
+              <div className="flex items-center justify-between gap-3 r">
                 <div className="flex items-center gap-2.5">
                   {task.icon}
                   <div>
@@ -488,7 +541,7 @@ export function ReferencePackageOverview({
           </p>
         ))}
       </div>
-      <p className="mt-3 rounded-[12px] bg-[#F5F5F5] py-2.5 text-center text-[12px] text-[#6B7280]">
+      <p className="mt-3 r">
         Alle bedragen zijn exclusief btw
       </p>
     </ReferenceCard>
@@ -603,7 +656,7 @@ export function ReferenceStatCard({
   className?: string;
 }) {
   return (
-    <div className={cn("rounded-[16px] border border-[#E2E0DB] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]", className)}>
+    <div className={cn("rounded-[16px] border border-[#E2E0DB] bg-white p-4 shadow-block", className)}>
       <p className="text-[12px] font-medium text-[#9CA3AF]">{label}</p>
       <p className="mt-1 text-[24px] font-semibold tracking-tight text-[#111111]">{value}</p>
       {sub && (
@@ -629,7 +682,7 @@ export function ReferenceBadge({
   variant = "default",
 }: {
   children: React.ReactNode;
-  variant?: "default" | "green" | "purple" | "orange";
+  variant?: "default" | "green" | "purple" | "orange" | "red" | "blue";
 }) {
   return (
     <span
@@ -638,6 +691,8 @@ export function ReferenceBadge({
         variant === "green" && "bg-[#ECFDF5] text-[#10B981]",
         variant === "purple" && "bg-[#EDE9FE] text-[#7547F8]",
         variant === "orange" && "bg-[#FFF7ED] text-[#EA580C]",
+        variant === "red" && "bg-[#FEF2F2] text-[#DC2626]",
+        variant === "blue" && "bg-[#EFF6FF] text-[#2563EB]",
         variant === "default" && "bg-[#EAEAEA] text-[#6B7280]",
       )}
     >
@@ -656,7 +711,7 @@ export function ReferenceInfoCallout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-[16px] border border-[#E8DFC8] bg-[#FBF6EA] p-5">
+    <div className="rounded-[16px] border border-[#E8DFC8] bg-[#FBF6EA] p-5 shadow-block">
       <p className="font-semibold text-[#8B6914]">{title}</p>
       <div className="mt-2 text-[14px] leading-relaxed text-[#6B7280]">{children}</div>
     </div>

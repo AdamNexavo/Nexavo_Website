@@ -61,7 +61,7 @@ export const ContactProcess = () => (
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.45, delay: index * 0.08 }}
-            className="relative rounded-[1.5rem] border border-border/50 bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+            className="relative rounded-[1.5rem] border border-border/50 bg-white p-6 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
           >
             <div className="mb-5 flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">

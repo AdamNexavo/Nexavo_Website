@@ -26,7 +26,7 @@ export function PortalIntakeTerms({ checked, onCheckedChange, className, loading
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className={cn("rounded-[14px] border border-[#E2E0DB] bg-[#FAFAF8] p-5", className)}>
+    <div className={cn("rounded-[14px] border border-[#E2E0DB] bg-[#FAFAF8] shadow-block p-5", className)}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[14px] font-semibold text-[#111111]">Algemene voorwaarden</p>

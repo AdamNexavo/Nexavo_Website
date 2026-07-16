@@ -193,7 +193,7 @@ export function PortalCommentsBox({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="mt-2 min-h-[90px] w-full rounded-[20px] border-0 bg-[#F5F4F2] px-4 py-3 text-[14px] italic text-[#6B7280] shadow-none placeholder:text-[#9CA3AF] placeholder:not-italic focus:outline-none focus:ring-2 focus:ring-[#7547F8]/30"
+        className="mt-2 min-h-[90px] w-full rounded-[20px] border-0 bg-[#F5F4F2] px-4 py-3 text-[14px] italic text-[#6B7280] shadow-card placeholder:text-[#9CA3AF] placeholder:not-italic focus:outline-none focus:ring-2 focus:ring-[#7547F8]/30"
       />
     </div>
   );

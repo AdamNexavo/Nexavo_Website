@@ -1,8 +1,9 @@
 import { BUILD_PROGRESS_STEPS } from "./constants";
 import { normalizeWebsiteReferences, createDefaultWebsiteReferences } from "./references";
 import type { IntegrationStatus, TicketStatusKey } from "./constants";
+import { generateId } from "./storage";
 
-export type PaymentStatus = "paid" | "pending" | "open" | "overdue";
+export type PaymentStatus = "paid" | "pending" | "open" | "overdue" | "concept" | "processing";
 export type PaymentBillingType = "one_time" | "recurring";
 export type ClientPhase = "build" | "live";
 
@@ -129,15 +130,48 @@ export interface OnboardingData {
   /** Algemene voorwaarden geaccepteerd */
   termsAccepted?: boolean;
   termsAcceptedAt?: string;
+  /** Klant heeft de betalingsstap bereikt (openstaande betaling mag pas dan) */
+  paymentStepReached?: boolean;
   /** Toelichting per gewenste sectie */
   sectionNotes?: string;
 }
 
 export interface IntegrationRequest {
+  id: string;
   integrationId: string;
   name: string;
   note?: string;
   requestedAt: string;
+  status: IntegrationRequestStatus;
+  internalNote?: string;
+}
+
+export type IntegrationRequestStatus = "new" | "in_progress" | "completed" | "rejected";
+
+export type PreviewWebsiteStatus = "concept" | "ready" | "feedback_requested" | "approved";
+
+export interface ClientPreviewSettings {
+  enabled: boolean;
+  url?: string;
+  title?: string;
+  description?: string;
+  status?: PreviewWebsiteStatus;
+}
+
+export type PixelType = "meta" | "tiktok" | "google_ads" | "google_analytics" | "other";
+
+export interface TechnicalSetupChecklist {
+  intakeReceived?: boolean;
+  previewCreated?: boolean;
+  domainLinked?: boolean;
+  dnsChecked?: boolean;
+  sslActive?: boolean;
+  formsTested?: boolean;
+  integrationsChecked?: boolean;
+  pixelAdded?: boolean;
+  reviewFlowChecked?: boolean;
+  bookingFlowChecked?: boolean;
+  technicallyComplete?: boolean;
 }
 
 export interface ProjectProgress {
@@ -160,8 +194,31 @@ export interface PackageInfo {
   startDate?: string;
   /** Geen pakket gekozen bij registratie — klant moet zelf kiezen */
   pendingSelection?: boolean;
+  /** Maatwerk bevestigd door klant; Nexavo rondt intake-pakketstap af in admin */
+  maatwerkPending?: boolean;
   /** Gekozen add-ons tijdens pakket-checkout */
   selectedAddons?: string[];
+  /** Optionele voorkeuren bij maatwerk (pagina's, koppelingen, add-ons) */
+  maatwerkWishlist?: MaatwerkWishlist;
+}
+
+export interface MaatwerkWishlist {
+  pages: string[];
+  integrations: string[];
+  addons: string[];
+}
+
+export interface PaymentLine {
+  id: string;
+  description: string;
+  type: "package" | "maintenance" | "addon" | "discount" | "subtotal" | "vat" | "total" | string;
+  quantity?: number;
+  unit?: string;
+  unitPriceExVat?: number;
+  vatRate?: number;
+  totalExVat?: number;
+  vatAmount?: number;
+  totalIncVat?: number;
 }
 
 export interface PaymentRecord {
@@ -169,16 +226,24 @@ export interface PaymentRecord {
   /** Officieel factuurnummer, bijv. NX-2026-00001 */
   invoiceNumber?: string;
   description: string;
+  packageName?: string;
   amount: string;
+  amountExVat?: string;
+  vatAmount?: string;
+  amountIncVat?: string;
   status: PaymentStatus;
   /** Eenmalig (pakket) of periodiek (onderhoud) */
   billingType?: PaymentBillingType;
+  paymentTermDays?: number;
   dueDate: string;
   issuedAt?: string;
   createdAt?: string;
   paidAt?: string;
+  paymentMethod?: string;
+  lines?: PaymentLine[];
   /** HTML-factuur (demo); later Mollie PDF-URL */
   pdfDataUrl?: string;
+  pdfUrl?: string;
   molliePaymentId?: string;
   mollieCheckoutUrl?: string;
 }
@@ -216,6 +281,50 @@ export interface TermsAcceptanceAudit {
   acceptedAt: string;
   ipAddress?: string;
   userAgent?: string;
+  customerName?: string;
+  companyName?: string;
+  email?: string;
+  version?: string;
+  snapshotText?: string;
+  source?: "registration" | "intake" | "payment";
+  checkboxText?: string;
+  acceptedByName?: string;
+  documentId?: string;
+}
+
+export type ClientDocumentCategory =
+  | "logo"
+  | "image"
+  | "video"
+  | "pdf"
+  | "file"
+  | "intake"
+  | "generated"
+  | "other";
+
+export type ClientDocumentStatus = "active" | "archived" | "replaced";
+
+export interface ClientDocument {
+  id: string;
+  customerId: string;
+  name: string;
+  type: string;
+  category: ClientDocumentCategory;
+  size?: number;
+  uploadedAt: string;
+  uploadedBy: "client" | "admin" | "system";
+  url?: string;
+  dataUrl?: string;
+  status: ClientDocumentStatus;
+  notes?: string;
+  source?: "onboarding" | "admin" | "generated" | "assigned";
+}
+
+export interface ProjectProgressSettings {
+  manualPercent?: number;
+  manualPhase?: string;
+  manualOverrideEnabled?: boolean;
+  internalNote?: string;
 }
 
 export interface DocumentAttachment {
@@ -243,6 +352,7 @@ export type DnsManagedBy = "client" | "nexavo" | "provider";
 export interface ClientTechnicalSetup {
   /** Admin heeft technische setup afgerond */
   completed?: boolean;
+  checklist?: TechnicalSetupChecklist;
   hostingProvider?: string;
   hostingProviderLabel?: string;
   providerLoginUrl?: string;
@@ -256,6 +366,8 @@ export interface ClientTechnicalSetup {
   sslProvider?: string;
   cmsPlatform?: string;
   pixelInstalled?: boolean;
+  pixelType?: PixelType;
+  pixelId?: string;
   pixelNotes?: string;
   internalNotes?: string;
   updatedAt?: string;
@@ -313,8 +425,16 @@ export interface ClientAccount {
   termsAcceptance?: TermsAcceptanceAudit;
   /** Door admin toegevoegde documenten zichtbaar in klantportaal */
   assignedDocuments?: ClientAssignedDocument[];
+  /** Handmatige preview-instellingen voor klantportaal */
+  previewSettings?: ClientPreviewSettings;
+  /** Alle documenten/media per klant (uploads + gegenereerd) */
+  clientDocuments?: ClientDocument[];
+  /** Handmatige voortgang-instellingen door admin */
+  progressSettings?: ProjectProgressSettings;
   /** Admin: pakket definitief — klant kan niet zelf wijzigen */
   packageLocked?: boolean;
+  /** Betaaltermijn in dagen — standaard 14, instelbaar door admin per klant */
+  paymentTermDays?: number;
   active: boolean;
 }
 
@@ -474,6 +594,20 @@ export function migrateOnboarding(data: Partial<OnboardingData> & Record<string,
   };
 }
 
+export function migrateIntegrationRequest(
+  req: Partial<IntegrationRequest> & { integrationId: string; name: string; requestedAt: string },
+): IntegrationRequest {
+  return {
+    id: req.id ?? generateId(),
+    integrationId: req.integrationId,
+    name: req.name,
+    note: req.note,
+    requestedAt: req.requestedAt,
+    status: req.status ?? "new",
+    internalNote: req.internalNote,
+  };
+}
+
 export function generateClientNumberFromId(id: string): string {
   return `NX-${id.replace(/-/g, "").slice(0, 8).toUpperCase()}`;
 }
@@ -491,9 +625,14 @@ export function migrateClient(client: ClientAccount & { phase?: ClientPhase }): 
     phase: client.phase ?? "build",
     onboarding,
     integrationStatuses: client.integrationStatuses ?? {},
-    integrationRequests: client.integrationRequests ?? [],
+    integrationRequests: (client.integrationRequests ?? []).map((r) =>
+      migrateIntegrationRequest(r as IntegrationRequest),
+    ),
     billingInfo: client.billingInfo ?? {},
     assignedDocuments: client.assignedDocuments ?? [],
+    previewSettings: client.previewSettings,
+    clientDocuments: client.clientDocuments ?? [],
+    progressSettings: client.progressSettings,
     packageLocked: client.packageLocked ?? false,
     websites: client.websites ?? [],
     technicalSetup: client.technicalSetup,

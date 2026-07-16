@@ -1,8 +1,8 @@
-import { useParams, Link, useSearchParams } from "react-router-dom";
+import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, Copy, Trash2, Plus, Mail, Pencil, Upload, FileText as FileIcon, Globe, ExternalLink, ChevronDown, AlertCircle } from "lucide-react";
 import { getClientById, upsertClient } from "@/lib/portal/storage";
-import { migrateClient, type ClientAccount, type DocumentAttachment } from "@/lib/portal/types";
+import { migrateClient, type ClientAccount, type ClientPreviewSettings, type DocumentAttachment } from "@/lib/portal/types";
 import { buildWebsitePrompt } from "@/lib/portal/prompt-builder";
 import {
   ReferenceCard,
@@ -16,13 +16,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { getClientReferenceNumber, applyProjectProgress } from "@/lib/portal/helpers";
+import { getClientReferenceNumber, applyProjectProgress, getEffectiveProjectProgress, PAYMENT_TERM_DAYS, formatMonthlyPriceDisplay } from "@/lib/portal/helpers";
 import {
   getClientCrmStatus,
   CRM_STATUS_LABELS,
 } from "@/lib/portal/admin-stats";
-import { getMaintenanceById, getPlanById } from "@/lib/portal/constants";
-import { createAssignedDocument } from "@/lib/portal/client-documents";
+import { getMaintenanceById, getPlanById, PORTAL_ADDONS } from "@/lib/portal/constants";
+import { createAssignedDocument, getAllClientDocuments, renameClientDocument, removeClientDocument, addAdminClientDocument, DOCUMENT_CATEGORY_LABELS } from "@/lib/portal/client-documents";
+import { buildTermsAcceptanceDocumentHtml } from "@/lib/portal/terms-audit";
 import {
   MaintenancePolicyContent,
   UpsellPricingContent,
@@ -40,6 +41,7 @@ import {
 } from "@/lib/portal/websites";
 import type { ClientTechnicalSetup } from "@/lib/portal/types";
 import { cn } from "@/lib/utils";
+import { MailboxRow, ReferencePanelCard } from "@/components/portal/MailboxUI";
 
 const TABS = [
   { id: "overzicht", label: "Overzicht" },
@@ -65,6 +67,7 @@ export default function AdminClientDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [tab, setTab] = useState(() => searchParams.get("tab") ?? "overzicht");
   const [expandedSiteId, setExpandedSiteId] = useState<string | null>(
     () => searchParams.get("site"),
@@ -138,7 +141,25 @@ export default function AdminClientDetailPage() {
   };
 
   const updateProgress = (percent: number) => {
-    saveClient(applyProjectProgress(client, percent));
+    const result = applyProjectProgress(client, percent);
+    if (result.progress.percent < percent) {
+      toast({
+        title: "Voortgang begrensd",
+        description: `Maximaal ${result.progress.percent}% — openstaande acties blokkeren 100%.`,
+      });
+    }
+    saveClient(result);
+  };
+
+  const savePreviewSettings = (partial: Partial<ClientPreviewSettings>) => {
+    saveClient({
+      ...client,
+      previewSettings: {
+        enabled: client.previewSettings?.enabled ?? false,
+        ...client.previewSettings,
+        ...partial,
+      },
+    });
   };
 
   const saveUrls = () => {
@@ -212,6 +233,7 @@ export default function AdminClientDetailPage() {
   const websites = getClientWebsites(client);
   const technicalSetup = getClientTechnicalSetup(client);
   const techComplete = isTechnicalSetupComplete(technicalSetup);
+  const effectiveProgress = getEffectiveProjectProgress(client);
 
   const saveTechnicalSetup = (setup: ClientTechnicalSetup) => {
     saveClient({ ...client, technicalSetup: setup });
@@ -274,15 +296,87 @@ export default function AdminClientDetailPage() {
         <div className="grid gap-5 lg:grid-cols-2">
           <ReferenceCard>
             <h3 className="mb-4 font-semibold">Projectvoortgang</h3>
-            <PortalProgressBar percent={client.progress.percent} />
-            <p className="my-3 text-[32px] font-semibold">{client.progress.percent}%</p>
-            <p className="mb-3 text-[13px] text-[#6B7280]">{client.progress.phase}</p>
+            <div className="mb-4 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-[12px] border border-[#E2E0DB] bg-[#FAFAF8] shadow-block p-3">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-[#9CA3AF]">Handmatig ingesteld</p>
+                <p className="mt-1 text-[24px] font-semibold">{effectiveProgress.manualPercent}%</p>
+              </div>
+              <div className="rounded-[12px] border border-[#E2E0DB] bg-white shadow-block p-3">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-[#9CA3AF]">Effectief (klant ziet)</p>
+                <p className="mt-1 text-[24px] font-semibold text-[#7547F8]">{effectiveProgress.effectivePercent}%</p>
+              </div>
+            </div>
+            <PortalProgressBar percent={effectiveProgress.effectivePercent} />
+            <p className="my-3 text-[13px] text-[#6B7280]">{effectiveProgress.phase}</p>
+            {effectiveProgress.capped && (
+              <div className="mb-3 rounded-[10px] border border-[#F59E0B]/30 bg-[#FFFBEB] px-3 py-2 text-[12px] text-[#B45309]">
+                Handmatig {effectiveProgress.manualPercent}% — effectief begrensd door blockers.
+              </div>
+            )}
+            {effectiveProgress.blockers.length > 0 && (
+              <ul className="mb-4 space-y-1 text-[12px] text-[#6B7280]">
+                {effectiveProgress.blockers.map((b) => (
+                  <li key={b.key}>· {b.label} (max {b.maxPercent}%)</li>
+                ))}
+              </ul>
+            )}
+            <label className="mb-3 flex items-center gap-2 text-[13px]">
+              <input
+                type="checkbox"
+                checked={client.progressSettings?.manualOverrideEnabled ?? false}
+                onChange={(e) =>
+                  saveClient({
+                    ...client,
+                    progressSettings: {
+                      ...client.progressSettings,
+                      manualOverrideEnabled: e.target.checked,
+                    },
+                  })
+                }
+              />
+              Handmatig percentage overschrijven
+            </label>
+            <div className="mb-3 flex items-center gap-3">
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                value={client.progressSettings?.manualPercent ?? client.progress.percent}
+                onChange={(e) => {
+                  const val = Math.min(100, Math.max(0, Number(e.target.value) || 0));
+                  saveClient({
+                    ...client,
+                    progressSettings: {
+                      ...client.progressSettings,
+                      manualOverrideEnabled: true,
+                      manualPercent: val,
+                    },
+                  });
+                }}
+                className="w-24 rounded-[10px]"
+              />
+              <span className="text-[13px] text-[#6B7280]">%</span>
+              <Button size="sm" variant="default" onClick={() => updateProgress(client.progressSettings?.manualPercent ?? client.progress.percent)}>
+                Toepassen
+              </Button>
+            </div>
+            <Textarea
+              placeholder="Interne notitie projectvoortgang..."
+              value={client.progressSettings?.internalNote ?? ""}
+              onChange={(e) =>
+                saveClient({
+                  ...client,
+                  progressSettings: { ...client.progressSettings, internalNote: e.target.value },
+                })
+              }
+              className="mb-4 min-h-[60px] rounded-[12px] text-[13px]"
+            />
             <PortalChecklist items={client.progress.steps} />
             <div className="mt-4 flex flex-wrap gap-2">
               {[25, 50, 72, 100].map((p) => (
                 <Button
                   key={p}
-                  variant={client.progress.percent === p ? "default" : "outline"}
+                  variant={(client.progressSettings?.manualPercent ?? client.progress.percent) === p ? "default" : "outline"}
                   size="sm"
                   onClick={() => updateProgress(p)}
                 >
@@ -295,10 +389,57 @@ export default function AdminClientDetailPage() {
           <ReferenceCard className="space-y-4">
             <h3 className="font-semibold">Pakket & contact</h3>
             <Field label="Pakket" value={`${plan?.name ?? client.package.planName} · ${client.package.planPrice ?? "—"}`} />
-            {maintenance && (
-              <Field label="Onderhoud" value={`${maintenance.name} · ${maintenance.price}`} />
+            {client.package.planId === "maatwerk" && client.package.maatwerkPending && (
+              <div className="rounded-[12px] border border-[#FDBA74] bg-[#FFFBEB] shadow-block p-3 space-y-2">
+                <p className="text-[12px] font-medium text-[#C2410C]">Maatwerk intake in behandeling</p>
+                <p className="text-[11px] text-[#6B7280]">
+                  De klant heeft maatwerk bevestigd. De pakketstap blijft in het portaal op &quot;in behandeling&quot; tot
+                  je deze hier afrondt.
+                </p>
+                {client.package.maatwerkWishlist &&
+                  (client.package.maatwerkWishlist.pages.length > 0 ||
+                    client.package.maatwerkWishlist.integrations.length > 0 ||
+                    client.package.maatwerkWishlist.addons.length > 0) && (
+                  <div className="space-y-1.5 border-t border-[#FDBA74]/40 pt-2 text-[11px] text-[#6B7280]">
+                    {client.package.maatwerkWishlist.pages.length > 0 && (
+                      <p>
+                        <span className="font-medium text-[#111111]">Pagina&apos;s:</span>{" "}
+                        {client.package.maatwerkWishlist.pages.join(", ")}
+                      </p>
+                    )}
+                    {client.package.maatwerkWishlist.integrations.length > 0 && (
+                      <p>
+                        <span className="font-medium text-[#111111]">Koppelingen:</span>{" "}
+                        {client.package.maatwerkWishlist.integrations.join(", ")}
+                      </p>
+                    )}
+                    {client.package.maatwerkWishlist.addons.length > 0 && (
+                      <p>
+                        <span className="font-medium text-[#111111]">Add-ons:</span>{" "}
+                        {client.package.maatwerkWishlist.addons
+                          .map((id) => PORTAL_ADDONS.find((a) => a.id === id)?.name ?? id)
+                          .join(", ")}
+                      </p>
+                    )}
+                  </div>
+                )}
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    saveClient({
+                      ...client,
+                      package: { ...client.package, maatwerkPending: false },
+                    })
+                  }
+                >
+                  Maatwerk intake afronden
+                </Button>
+              </div>
             )}
-            <div className="rounded-[12px] border border-[#E2E0DB] bg-[#FAFAF8] p-3">
+            {maintenance && (
+              <Field label="Onderhoud" value={`${maintenance.name} · ${formatMonthlyPriceDisplay(maintenance.price)}`} />
+            )}
+            <div className="rounded-[12px] border border-[#E2E0DB] bg-[#FAFAF8] shadow-block p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="text-[12px] font-medium text-[#111111]">Pakket vergrendeld</p>
@@ -319,6 +460,65 @@ export default function AdminClientDetailPage() {
             </div>
             <Field label="Contactpersoon" value={`${client.user.firstName} ${client.user.lastName}`} />
             <Field label="Telefoon" value={client.user.phone} />
+            <div className="space-y-4 border-t border-[#E5E5E5] pt-4">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[13px] font-semibold text-[#111111]">Preview in klantportaal</p>
+                <label className="flex items-center gap-2 text-[13px]">
+                  <input
+                    type="checkbox"
+                    checked={client.previewSettings?.enabled ?? false}
+                    onChange={(e) => savePreviewSettings({ enabled: e.target.checked })}
+                  />
+                  Tonen
+                </label>
+              </div>
+              {client.previewSettings?.enabled && (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="sm:col-span-2">
+                    <Label>Preview URL</Label>
+                    <Input
+                      value={client.previewSettings.url ?? ""}
+                      onChange={(e) => savePreviewSettings({ url: e.target.value })}
+                      placeholder="https://preview.jouwbedrijf.works"
+                      className="mt-1.5 rounded-[12px] bg-white"
+                    />
+                  </div>
+                  <div>
+                    <Label>Preview titel</Label>
+                    <Input
+                      value={client.previewSettings.title ?? ""}
+                      onChange={(e) => savePreviewSettings({ title: e.target.value })}
+                      className="mt-1.5 rounded-[12px] bg-white"
+                    />
+                  </div>
+                  <div>
+                    <Label>Preview status</Label>
+                    <select
+                      value={client.previewSettings.status ?? "concept"}
+                      onChange={(e) =>
+                        savePreviewSettings({
+                          status: e.target.value as ClientPreviewSettings["status"],
+                        })
+                      }
+                      className="mt-1.5 h px-3 text-[14px]"
+                    >
+                      <option value="concept">Concept</option>
+                      <option value="ready">Klaar om te bekijken</option>
+                      <option value="feedback_requested">Feedback gevraagd</option>
+                      <option value="approved">Goedgekeurd</option>
+                    </select>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label>Preview omschrijving</Label>
+                    <Textarea
+                      value={client.previewSettings.description ?? ""}
+                      onChange={(e) => savePreviewSettings({ description: e.target.value })}
+                      className="mt-1.5 min-h-[80px] rounded-[12px] bg-white"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="space-y-4 border-t border-[#E5E5E5] pt-4">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-[13px] font-semibold text-[#111111]">Website & preview URL</p>
@@ -431,7 +631,7 @@ export default function AdminClientDetailPage() {
                   const siteHref = site.url ?? site.previewUrl;
                   const expanded = expandedSiteId === site.id;
                   return (
-                    <div key={site.id} className="rounded-[14px] border border-[#E5E5E5] bg-white overflow-hidden">
+                    <div key={site.id} className="rounded-[14px] border border-[#E5E5E5] bg-white shadow-block overflow-hidden">
                       <button
                         type="button"
                         onClick={() => setExpandedSiteId(expanded ? null : site.id)}
@@ -466,7 +666,7 @@ export default function AdminClientDetailPage() {
                               </a>
                             )}
                           </div>
-                          <WebsiteStatsPanel client={client} adminView showPreview={false} />
+                          <WebsiteStatsPanel client={client} adminView showPreview={false} singleLock={false} />
                         </div>
                       )}
                     </div>
@@ -506,7 +706,7 @@ export default function AdminClientDetailPage() {
               <Field label="Uitstraling" value={o.stylePreference} />
             </div>
             {o.company.aboutCompany && (
-              <div className="mt-4 rounded-[12px] bg-[#FAFAF8] p-4">
+              <div className="mt-4 r">
                 <p className="text-[12px] text-[#9CA3AF]">Over het bedrijf</p>
                 <p className="mt-1 text-[14px]">{o.company.aboutCompany}</p>
               </div>
@@ -527,7 +727,7 @@ export default function AdminClientDetailPage() {
               <div className="mt-4 space-y-2">
                 <p className="text-[12px] font-medium text-[#9CA3AF]">Referenties</p>
                 {o.websiteReferences!.filter((r) => r.url).map((r, i) => (
-                  <div key={i} className="rounded-[12px] bg-[#FAFAF8] p-3 text-[13px]">
+                  <div key={i} className="r text-[13px]">
                     <a href={r.url} target="_blank" rel="noopener noreferrer" className="font-medium text-[#7547F8] hover:underline">{r.url}</a>
                     {r.note && <p className="mt-1 text-[#6B7280]">{r.note}</p>}
                   </div>
@@ -538,13 +738,49 @@ export default function AdminClientDetailPage() {
 
           {client.termsAcceptance || o.termsAccepted ? (
             <ReferenceCard>
-              <h3 className="mb-3 font-semibold">Algemene voorwaarden</h3>
+              <h3 className="mb-3 font-semibold">Acceptatie algemene voorwaarden</h3>
               <div className="grid gap-3 sm:grid-cols-2 text-[13px]">
+                <Field label="Document-ID" value={client.termsAcceptance?.documentId} />
+                <Field label="Versie" value={client.termsAcceptance?.version} />
                 <Field
                   label="Geaccepteerd op"
                   value={new Date(client.termsAcceptance?.acceptedAt ?? o.termsAcceptedAt ?? "").toLocaleString("nl-NL")}
                 />
+                <Field label="Door" value={client.termsAcceptance?.acceptedByName ?? client.termsAcceptance?.customerName} />
+                <Field label="E-mail" value={client.termsAcceptance?.email ?? client.email} />
                 <Field label="IP-adres" value={client.termsAcceptance?.ipAddress} />
+                <Field label="Bron" value={client.termsAcceptance?.source} />
+                <Field label="User agent" value={client.termsAcceptance?.userAgent?.slice(0, 60)} />
+              </div>
+              <p className="mt-3 text-[12px] text-[#6B7280]">{client.termsAcceptance?.checkboxText}</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    if (!client.termsAcceptance) return;
+                    const html = buildTermsAcceptanceDocumentHtml(client.termsAcceptance);
+                    const w = window.open("", "_blank");
+                    if (w) {
+                      w.document.write(html);
+                      w.document.close();
+                    }
+                  }}
+                >
+                  Bekijk acceptatiedocument
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    toast({
+                      title: "PDF (demo)",
+                      description: "Gebruik Print / opslaan als PDF in het acceptatiedocument.",
+                    });
+                  }}
+                >
+                  Download PDF
+                </Button>
               </div>
             </ReferenceCard>
           ) : null}
@@ -613,46 +849,87 @@ export default function AdminClientDetailPage() {
             <Field label="Plaats" value={b.city} />
             <Field label="Ten namegestelde" value={`${b.accountHolderFirstName ?? client.user.firstName} ${b.accountHolderLastName ?? client.user.lastName}`} />
           </div>
+          <div className="max-w-xs border-t border-[#E2E0DB] pt-4">
+            <Label className="text-[12px] text-[#6B7280]">Betaaltermijn (dagen)</Label>
+            <p className="mb-2 text-[11px] text-[#9CA3AF]">
+              Standaard {PAYMENT_TERM_DAYS} dagen. Klant kan dit niet zelf wijzigen in het portaal.
+            </p>
+            <Input
+              type="number"
+              min={1}
+              max={90}
+              value={client.paymentTermDays ?? PAYMENT_TERM_DAYS}
+              onChange={(e) => {
+                const days = Math.max(1, Math.min(90, Number(e.target.value) || PAYMENT_TERM_DAYS));
+                saveClient({ ...client, paymentTermDays: days });
+              }}
+              className="mt-1 rounded-[10px] border-[#E2E0DB] bg-white"
+            />
+          </div>
         </ReferenceCard>
       )}
 
       {tab === "documenten" && (
         <div className="space-y-5">
-          <ReferenceCard>
-            <h3 className="mb-1 font-semibold">Klantspecifieke documenten</h3>
-            <p className="mb-4 text-[13px] text-[#6B7280]">
-              Upload een bestand (PDF, Word, etc.) dat de klant kan downloaden onder Profiel → Documenten.
-            </p>
-
-            {(client.assignedDocuments ?? []).length === 0 ? (
-              <p className="mb-4 text-[13px] text-[#6B7280]">Nog geen klantspecifieke documenten.</p>
+          <ReferenceCard className="!p-0 overflow-hidden">
+            <div className="border-b border-[#E2E0DB] bg-[#F5F5F5] px-5 py-4">
+              <h3 className="font-semibold text-[#111111]">Documenten & media</h3>
+              <p className="text-[13px] text-[#6B7280]">
+                Alle uploads van de klant, intake-bestanden en door Nexavo toegevoegde documenten.
+              </p>
+            </div>
+            {getAllClientDocuments(client).length === 0 ? (
+              <p className="bg-white px-5 py-10 text-[13px] text-[#6B7280]">Nog geen documenten voor deze klant.</p>
             ) : (
-              <div className="mb-5 divide-y divide-[#E5E5E5]">
-                {(client.assignedDocuments ?? []).map((doc) => (
-                  <div key={doc.id} className="flex items-start justify-between gap-3 py-3">
-                    <div className="flex items-start gap-3">
+              <div className="divide-y divide-[#E2E0DB] bg-white">
+                {getAllClientDocuments(client).map((doc) => (
+                  <div key={doc.id} className="flex flex-wrap items-start justify-between gap-3 px-5 py-3">
+                    <div className="flex min-w-0 flex-1 items-start gap-3">
                       <FileIcon className="mt-0.5 h-5 w-5 shrink-0 text-[#7547F8]" />
-                      <div>
-                        <p className="font-medium">{doc.title}</p>
-                        {doc.description && <p className="text-[12px] text-[#6B7280]">{doc.description}</p>}
-                        {doc.attachment && (
-                          <p className="mt-1 text-[12px] text-[#9CA3AF]">{doc.attachment.fileName}</p>
-                        )}
-                        <p className="mt-1 text-[11px] text-[#9CA3AF]">
-                          Toegevoegd op {new Date(doc.assignedAt).toLocaleDateString("nl-NL")}
+                      <div className="min-w-0">
+                        <p className="font-medium text-[#111111]">{doc.name}</p>
+                        <p className="text-[12px] text-[#6B7280]">
+                          {DOCUMENT_CATEGORY_LABELS[doc.category]} · {doc.uploadedBy} ·{" "}
+                          {new Date(doc.uploadedAt).toLocaleDateString("nl-NL")}
+                          {doc.size ? ` · ${(doc.size / 1024).toFixed(0)} KB` : ""}
                         </p>
+                        {doc.notes && <p className="mt-0.5 text-[12px] text-[#9CA3AF]">{doc.notes}</p>}
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm" onClick={() => removeDocument(doc.id)}>
-                      <Trash2 className="h-4 w-4 text-[#9CA3AF]" />
-                    </Button>
+                    <div className="flex flex-wrap gap-1">
+                      {doc.dataUrl && (
+                        <Button size="sm" variant="outline" asChild>
+                          <a href={doc.dataUrl} target="_blank" rel="noopener noreferrer">
+                            Bekijken
+                          </a>
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          const name = window.prompt("Nieuwe naam", doc.name);
+                          if (name?.trim()) saveClient(renameClientDocument(client, doc.id, name.trim()));
+                        }}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => saveClient(removeClientDocument(client, doc.id))}>
+                        <Trash2 className="h-4 w-4 text-[#9CA3AF]" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
             )}
+          </ReferenceCard>
 
-            <div className="space-y-3 rounded-[14px] border border-[#E5E5E5] bg-[#FAFAFA] p-4">
-              <p className="text-[13px] font-semibold">Document uploaden</p>
+          <ReferenceCard>
+            <h3 className="mb-1 font-semibold">Document toevoegen (admin)</h3>
+            <p className="mb-4 text-[13px] text-[#6B7280]">
+              Voeg een document toe dat de klant kan downloaden onder Profiel → Documenten.
+            </p>
+            <div className="space-y-3">
               <div>
                 <Label>Titel *</Label>
                 <Input value={docTitle} onChange={(e) => setDocTitle(e.target.value)} className="mt-1 rounded-[12px] bg-white" placeholder="Bijv. Offerte maatwerk" />
@@ -663,7 +940,7 @@ export default function AdminClientDetailPage() {
               </div>
               <div>
                 <Label>Bestand *</Label>
-                <label className="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-[12px] border border-dashed border-[#D1D5DB] bg-white px-4 py-6 text-center transition-colors hover:border-[#7547F8]/40">
+                <label className="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-[12px] border border-dashed border-[#D1D5DB] bg-white shadow-block px-4 py-6 text-center transition-colors hover:border-[#7547F8]/40">
                   <Upload className="mb-2 h-6 w-6 text-[#7547F8]" />
                   <span className="text-[13px] font-medium text-[#111111]">
                     {docFile ? docFile.fileName : "Klik om een bestand te kiezen"}
@@ -699,35 +976,30 @@ export default function AdminClientDetailPage() {
       )}
 
       {tab === "tickets" && (
-        <ReferenceCard>
-          <h3 className="mb-4 font-semibold">Tickets ({client.tickets.length})</h3>
+        <ReferencePanelCard title="Tickets" subtitle={`${client.tickets.length} ticket(s) van deze klant`}>
           {client.tickets.length === 0 ? (
-            <p className="text-[13px] text-[#6B7280]">Geen tickets van deze klant.</p>
+            <p className="bg-white px-5 py-10 text-[13px] text-[#6B7280]">Geen tickets van deze klant.</p>
           ) : (
-            <div className="space-y-4">
-              {client.tickets.map((t) => (
-                <div key={t.id} className="rounded-[14px] border border-[#E2E0DB] p-4">
-                  <div className="mb-2 flex flex-wrap justify-between gap-2">
-                    <div>
-                      <span className="font-mono text-[11px] text-[#9CA3AF]">{t.number}</span>
-                      <p className="font-semibold">{t.subject}</p>
-                    </div>
-                    <ReferenceBadge variant={TICKET_STATUS_VARIANT[t.status] ?? "default"}>
-                      {TICKET_STATUSES[t.status]}
-                    </ReferenceBadge>
-                  </div>
-                  <p className="text-[12px] text-[#6B7280]">{t.messages.length} bericht(en)</p>
-                  <Link
-                    to={`/admin/tickets?ticket=${t.id}&client=${client.id}`}
-                    className="mt-2 inline-block text-[13px] text-[#7547F8] hover:underline"
-                  >
-                    Open in inbox →
-                  </Link>
-                </div>
-              ))}
+            <div>
+              {client.tickets.map((t) => {
+                const lastMsg = t.messages[t.messages.length - 1];
+                return (
+                  <MailboxRow
+                    key={t.id}
+                    badge={<span className="font-mono text-[10px] text-[#9CA3AF]">{t.number}</span>}
+                    title={t.subject}
+                    meta={t.category}
+                    preview={lastMsg?.body}
+                    date={new Date(t.updatedAt ?? t.createdAt).toLocaleDateString("nl-NL")}
+                    status={TICKET_STATUSES[t.status]}
+                    statusVariant={TICKET_STATUS_VARIANT[t.status]}
+                    onClick={() => navigate(`/admin/tickets?ticket=${t.id}&client=${client.id}`)}
+                  />
+                );
+              })}
             </div>
           )}
-        </ReferenceCard>
+        </ReferencePanelCard>
       )}
 
       {tab === "build" && (

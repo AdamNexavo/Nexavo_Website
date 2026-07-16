@@ -10,6 +10,7 @@ import {
   Settings,
   ChevronDown,
   LogOut,
+  Send,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePortalAuth } from "@/context/PortalAuthContext";
@@ -21,6 +22,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getAdminSettings } from "@/lib/portal/admin-settings";
+import { getAllClients } from "@/lib/portal/store";
+import { countOpenIntegrationRequests } from "@/lib/portal/applications";
 
 const beheerNav = [
   { label: "Dashboard", href: "/admin", icon: LayoutGrid, exact: true },
@@ -33,6 +36,7 @@ const beheerNav = [
 const supportNav = [
   { label: "Tickets", href: "/admin/tickets", icon: Ticket },
   { label: "Betalingen", href: "/admin/betalingen", icon: CreditCard },
+  { label: "Mail", href: "/admin/mail", icon: Send },
 ];
 
 function AdminNavItem({
@@ -41,12 +45,14 @@ function AdminNavItem({
   icon: Icon,
   exact,
   onNavigate,
+  badge,
 }: {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   exact?: boolean;
   onNavigate?: () => void;
+  badge?: number;
 }) {
   const location = useLocation();
   const active = exact
@@ -73,6 +79,11 @@ function AdminNavItem({
         <Icon className="h-[14px] w-[14px]" strokeWidth={1.75} />
       </span>
       {label}
+      {badge !== undefined && badge > 0 && (
+        <span className="ml-auto rounded-full bg-[#7547F8] px-1.5 py-0.5 text-[10px] font-semibold text-white">
+          {badge}
+        </span>
+      )}
     </Link>
   );
 }
@@ -81,6 +92,7 @@ export function ReferenceAdminSidebar({ className, onNavigate }: { className?: s
   const { logout } = usePortalAuth();
   const navigate = useNavigate();
   const settings = getAdminSettings();
+  const openKoppelingen = countOpenIntegrationRequests(getAllClients());
 
   const go = (path: string) => {
     navigate(path);
@@ -110,7 +122,12 @@ export function ReferenceAdminSidebar({ className, onNavigate }: { className?: s
           </p>
           <div className="space-y-0.5">
             {beheerNav.map((item) => (
-              <AdminNavItem key={item.href} {...item} onNavigate={onNavigate} />
+              <AdminNavItem
+                key={item.href}
+                {...item}
+                onNavigate={onNavigate}
+                badge={item.href === "/admin/aanvragen" ? openKoppelingen : undefined}
+              />
             ))}
           </div>
         </div>

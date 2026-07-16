@@ -26,7 +26,12 @@ export default function PortalLoginPage() {
     e.preventDefault();
     setLoading(true);
     let result = await login(email, password);
-    if (!result.ok && email.toLowerCase() === "admin@nexavo.works") {
+    const normalized = email.toLowerCase();
+    if (
+      !result.ok &&
+      !import.meta.env.VITE_SUPABASE_URL &&
+      (normalized === "admin@nexavo.works" || normalized === "adam@nexavo.works")
+    ) {
       result = await loginAsAdmin(email, password);
       if (result.ok) {
         setLoading(false);
@@ -44,7 +49,6 @@ export default function PortalLoginPage() {
 
   return (
     <PortalAuthShell
-      label="Klantportaal"
       title="Welkom terug"
       subtitle="Log in om je website, voortgang en support te bekijken."
     >

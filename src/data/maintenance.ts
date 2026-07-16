@@ -15,7 +15,7 @@ export const maintenancePackages: MaintenancePackage[] = [
     id: "basis",
     name: "Basis Beheer",
     price: "€59",
-    priceNote: "per maand, excl. btw",
+    priceNote: "excl. btw",
     description:
       "Voor eenvoudige websites met beperkte maandelijkse wijzigingen.",
     highlights: [
@@ -39,7 +39,7 @@ export const maintenancePackages: MaintenancePackage[] = [
     id: "plus",
     name: "Plus Beheer",
     price: "€99",
-    priceNote: "per maand, excl. btw",
+    priceNote: "excl. btw",
     description:
       "Voor klanten die vaker kleine wijzigingen willen en sneller geholpen willen worden.",
     highlights: [
@@ -62,7 +62,7 @@ export const maintenancePackages: MaintenancePackage[] = [
     id: "growth",
     name: "Growth Beheer",
     price: "€199",
-    priceNote: "per maand, excl. btw",
+    priceNote: "excl. btw",
     description:
       "Voor actievere websites, meer content, meer wijzigingen en aanvullende modules.",
     highlights: [

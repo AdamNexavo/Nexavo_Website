@@ -28,7 +28,7 @@ export function PortalAuthShell({
           </Link>
           <div>
             {label && (
-              <span className="mb-4 inline-flex rounded-full border border-black/[0.08] bg-[#F5F4F2] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#6B7280]">
+              <span className="mb-4 inline-flex rounded-full border border-black/[0.08] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#6B7280]">
                 {label}
               </span>
             )}
@@ -50,16 +50,11 @@ export function PortalAuthShell({
         {/* Right: form */}
         <div className="flex items-center justify-center px-5 py-12 lg:px-8">
           <div className="w-full max-w-md">
-            <div className="mb-8 text-center lg:hidden">
-              <Link to="/" className="inline-flex justify-center">
+            <div className="mb-8 flex flex-col items-center text-center lg:hidden">
+              <Link to="/" className="flex justify-center">
                 <NexavoLogo className="h-7" />
               </Link>
-              {label && (
-                <span className="mt-6 inline-flex rounded-full border border-black/[0.08] bg-[#F5F4F2] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#6B7280]">
-                  {label}
-                </span>
-              )}
-              <h1 className="mt-4 text-[28px] font-semibold tracking-[-0.03em] text-[#0B0B0D]">{title}</h1>
+              <h1 className="mt-6 text-[28px] font-semibold tracking-[-0.03em] text-[#0B0B0D]">{title}</h1>
               <p className="mt-2 text-[15px] text-[#6B7280]">{subtitle}</p>
             </div>
             <div className="rounded-[28px] border border-black/[0.08] bg-white p-7 shadow-[0_24px_48px_-32px_rgba(15,23,42,0.12)]">

@@ -130,7 +130,7 @@ export const BookingCatalogSkeleton = () => (
         })}
       </div>
 
-      <div className="flex items-center gap-1.5 rounded-lg border border-[#ebe8e4] bg-[#fafaf9] p-1.5">
+      <div className="flex items-center gap-1.5 rounded-lg border border-[#ebe8e4] bg-[#fafaf9] shadow-block p-1.5">
         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[#eceae6] text-[7px] font-semibold">
           MJ
         </span>

@@ -1,5 +1,5 @@
 import type { ClientAccount, OnboardingData } from "./types";
-import { hasPendingPackage } from "./helpers";
+import { hasPendingPackage, isPackageIntakeComplete, isPaymentIntakeComplete, isIntakeSubmitted } from "./helpers";
 
 export type IntakeStepKey =
   | "company"
@@ -64,7 +64,11 @@ export function validateIntakeStep(
 
   if (step === "package") {
     if (hasPendingPackage(client) || client.package.planId === "none") {
-      errors.push("Kies een websitepakket.");
+      errors.push(
+        client.package.planId && client.package.planId !== "none"
+          ? "Bevestig je pakketkeuze met 'Keuze bevestigen'."
+          : "Kies een websitepakket.",
+      );
     } else if (client.package.planId !== "maatwerk" && !client.package.maintenanceId) {
       errors.push("Kies een onderhoudspakket.");
     }
@@ -95,6 +99,16 @@ export function validateIntakeStep(
 }
 
 export type IntakeStepStatus = "empty" | "partial" | "complete";
+
+export const INTAKE_PROGRESS_STEPS: IntakeStepKey[] = [
+  "company",
+  "media",
+  "wishes",
+  "integrations",
+  "package",
+  "billing",
+  "payment",
+];
 
 function hasAnyText(...values: (string | undefined)[]): boolean {
   return values.some((v) => Boolean(v?.trim()));
@@ -142,9 +156,11 @@ export function getIntakeStepStatus(client: ClientAccount, step: IntakeStepKey):
   }
 
   if (step === "package") {
-    if (client.package.planId && client.package.planId !== "none" && hasPendingPackage(client)) {
-      return "partial";
-    }
+    const hasDraft =
+      Boolean(client.package.planId && client.package.planId !== "none") ||
+      Boolean(client.package.maintenanceId);
+    if (!hasDraft) return "empty";
+    if (!isPackageIntakeComplete(client)) return "partial";
     return "empty";
   }
 
@@ -170,6 +186,7 @@ export function getIntakeStepStatus(client: ClientAccount, step: IntakeStepKey):
   }
 
   if (step === "payment") {
+    if (isIntakeSubmitted(client) && !isPaymentIntakeComplete(client)) return "partial";
     if (validateIntakeStep(client, "billing").valid) return "partial";
     return "empty";
   }
@@ -182,36 +199,40 @@ export function isIntakeStepComplete(client: ClientAccount, step: IntakeStepKey)
     return (client.onboarding.completedSteps ?? []).includes("integrations");
   }
   if (step === "payment") {
-    return client.onboarding.completed === true;
+    return isPaymentIntakeComplete(client);
+  }
+  if (step === "package") {
+    return isPackageIntakeComplete(client);
   }
   return validateIntakeStep(client, step).valid;
 }
 
+export function getIntakeProgress(client: ClientAccount) {
+  const statuses = INTAKE_PROGRESS_STEPS.map((step) => getIntakeStepStatus(client, step));
+  const completed = statuses.filter((status) => status === "complete").length;
+  const partial = statuses.filter((status) => status === "partial").length;
+  const total = INTAKE_PROGRESS_STEPS.length;
+  const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+  return {
+    completed,
+    partial,
+    total,
+    percent,
+    label: `${completed}/${total}`,
+  };
+}
+
 export function getIntakeProgressPercent(client: ClientAccount): number {
-  const steps: IntakeStepKey[] = [
-    "company",
-    "media",
-    "wishes",
-    "integrations",
-    "package",
-    "billing",
-    "payment",
-  ];
-  const done = steps.filter((s) => isIntakeStepComplete(client, s)).length;
-  return Math.round((done / steps.length) * 100);
+  return getIntakeProgress(client).percent;
+}
+
+export function getIntakeProgressLabel(client: ClientAccount): string {
+  return getIntakeProgress(client).label;
 }
 
 export function allIntakeStepsComplete(client: ClientAccount): boolean {
-  const steps: IntakeStepKey[] = [
-    "company",
-    "media",
-    "wishes",
-    "integrations",
-    "package",
-    "billing",
-    "payment",
-  ];
-  return steps.every((s) => isIntakeStepComplete(client, s));
+  return INTAKE_PROGRESS_STEPS.every((step) => isIntakeStepComplete(client, step));
 }
 
 export function intakeStepKeyFromSlug(slug: string): IntakeStepKey | null {

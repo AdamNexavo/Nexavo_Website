@@ -93,7 +93,7 @@ const IntegrationsSkeleton = () => (
       ].map((item) => (
         <div
           key={item.label}
-          className={cn("p-3", skeletonCard, "shadow-none")}
+          className={cn("p-3", skeletonCard, "shadow-card")}
         >
           <div className={cn("mb-2 h-7 w-7 rounded-lg", item.color)} />
           <div className="h-2 w-16 rounded bg-foreground/75" />

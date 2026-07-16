@@ -55,7 +55,7 @@ export const ContactMainSection = () => (
             </a>
           </Button>
 
-          <div className="rounded-2xl border border-border/60 bg-white">
+          <div className="rounded-2xl border border-border/60 bg-white shadow-card">
             <div className="grid sm:grid-cols-2">
               <div className="border-b border-border/50 p-5 sm:border-b-0 sm:border-r">
                 <p className="mb-2 text-xs font-bold uppercase tracking-wider text-primary">

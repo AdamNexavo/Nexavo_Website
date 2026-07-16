@@ -108,7 +108,7 @@ export const ContactFormSection = () => {
                 korte omschrijving van je bedrijf en wensen is al genoeg om te starten.
               </p>
 
-              <div className="rounded-2xl border border-border/40 bg-white p-5 md:p-6">
+              <div className="rounded-2xl border border-border/40 bg-white shadow-card p-5 md:p-6">
                 <p className="mb-4 text-sm font-bold uppercase tracking-wide text-muted-foreground">
                   Wat je kunt verwachten
                 </p>
@@ -130,7 +130,7 @@ export const ContactFormSection = () => {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35 }}
-                className="flex min-h-[420px] flex-col items-center justify-center rounded-2xl border border-border/40 bg-white px-6 py-12 text-center md:px-10"
+                className="flex min-h-[420px] flex-col items-center justify-center rounded-2xl border border-border/40 bg-white shadow-card px-6 py-12 text-center md:px-10"
               >
                 <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                   <CheckCircle2 className="h-9 w-9 text-primary" strokeWidth={1.75} />
