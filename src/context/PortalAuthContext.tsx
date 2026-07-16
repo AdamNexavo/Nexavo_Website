@@ -73,20 +73,26 @@ export function PortalAuthProvider({ children }: { children: ReactNode }) {
         const current = await bootstrapPortalAuth();
         if (cancelled) return;
 
+        setSessionState((existing) => {
+          if (existing && !current) return existing;
+          return current;
+        });
+
         if (current?.type === "client" && current.clientId) {
           const loaded = getClientById(current.clientId);
           if (!loaded) {
-            await authLogout();
-            setSessionState(null);
-            setClient(null);
-          } else {
-            setSessionState(current);
-            setClient(migrateClient(loaded));
+            void authLogout();
+            if (!cancelled) {
+              setSessionState(null);
+              setClient(null);
+            }
+            return;
           }
-        } else {
-          setSessionState(current);
-          setClient(null);
+          if (!cancelled) setClient(migrateClient(loaded));
+          return;
         }
+
+        if (!cancelled) setClient(null);
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -95,7 +101,7 @@ export function PortalAuthProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [loadClientFromSession]);
+  }, []);
 
   const login = useCallback(
     async (email: string, password: string) => {
@@ -113,8 +119,10 @@ export function PortalAuthProvider({ children }: { children: ReactNode }) {
 
   const loginAsAdmin = useCallback(async (email: string, password: string) => {
     const result = await loginAdmin(email, password);
-    if (!result) return { ok: false, error: "Onjuiste admin-gegevens." };
-    setSessionState(result);
+    if (!result.session) {
+      return { ok: false, error: result.error ?? "Onjuiste admin-gegevens." };
+    }
+    setSessionState(result.session);
     setClient(null);
     return { ok: true };
   }, []);

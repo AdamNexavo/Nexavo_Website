@@ -99,26 +99,46 @@ export async function bootstrapPortalAuth(): Promise<PortalSession | null> {
   return getSession();
 }
 
-export async function loginAdmin(email: string, password: string): Promise<PortalSession | null> {
+export async function loginAdmin(
+  email: string,
+  password: string,
+): Promise<{ session: PortalSession | null; error?: string }> {
   if (isSupabasePortalEnabled()) {
-    await initPortalStorage();
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.toLowerCase(),
-      password,
-    });
-    if (error || !data.user || !isPortalAdminUser(data.user)) {
-      await supabase.auth.signOut();
-      return null;
+    try {
+      await initPortalStorage();
+      const supabase = getSupabaseClient();
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.toLowerCase(),
+        password,
+      });
+      if (error) {
+        return { session: null, error: "Onjuist e-mailadres of wachtwoord." };
+      }
+      if (!data.user) {
+        return { session: null, error: "Inloggen mislukt. Probeer het opnieuw." };
+      }
+      if (!isPortalAdminUser(data.user)) {
+        await supabase.auth.signOut();
+        return {
+          session: null,
+          error: "Dit account heeft geen admin-rechten. Gebruik admin@nexavo.works.",
+        };
+      }
+      await refreshPortalStorage();
+      const session: PortalSession = {
+        type: "admin",
+        email: data.user.email ?? email.toLowerCase(),
+        loggedInAt: new Date().toISOString(),
+      };
+      setSession(session);
+      return { session };
+    } catch (cause) {
+      console.error("Admin login via Supabase mislukt:", cause);
+      return {
+        session: null,
+        error: "Verbinding met Supabase mislukt. Probeer het opnieuw of neem contact op.",
+      };
     }
-    await refreshPortalStorage();
-    const session: PortalSession = {
-      type: "admin",
-      email: data.user.email ?? email.toLowerCase(),
-      loggedInAt: new Date().toISOString(),
-    };
-    setSession(session);
-    return session;
   }
 
   const creds = getAdminCredentials();
@@ -132,9 +152,9 @@ export async function loginAdmin(email: string, password: string): Promise<Porta
       loggedInAt: new Date().toISOString(),
     };
     setSession(session);
-    return session;
+    return { session };
   }
-  return null;
+  return { session: null, error: "Onjuiste admin-gegevens." };
 }
 
 export async function loginClient(email: string, password: string): Promise<PortalSession | null> {
